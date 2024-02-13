@@ -1,7 +1,7 @@
 from fastapi import APIRouter, FastAPI, Body, Query, Request, Response, status, File, UploadFile, Form, HTTPException
 from typing import Annotated, Any
 from fastapi.responses import PlainTextResponse
-from root_app.services.whatsapp_tools import whatsapp_services as wa_service
+from root.services.whatsapp_tools import whatsapp_services as wa_service
 
 router = APIRouter(prefix="/wa_webhook",tags=["whatsapp"])
 
@@ -12,7 +12,7 @@ wa_request_url = "https://graph.facebook.com/v19.0/"+phone_number_id+"/messages"
 wa_media_url = "https://graph.facebook.com/v19.0/"+phone_number_id+"/media"
 
 
-@router.post("/",summary="Endpoint for listening to any eve")
+@router.post("",summary="Endpoint for listening to any eve")
 async def wa_new_message_from_user(wa_msg_data:Annotated[dict[str,Any],Body()]):
 
     # check if the event from the user or from the server
@@ -66,7 +66,7 @@ async def wa_new_message_from_user(wa_msg_data:Annotated[dict[str,Any],Body()]):
 
 
 
-@router.get("/")
+@router.get("")
 async def wa_verification(request:Request, response : Response):
     # Parse params from the webhook verification request
     mode = request.query_params["hub.mode"]

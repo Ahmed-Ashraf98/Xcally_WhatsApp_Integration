@@ -4,21 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/Xcally_WhatsApp_Integration.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root_app/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root_app/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root_app/routers/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root_app/routers/whatsapp.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root_app/routers/xcally.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root_app/services/whatsapp_tools/whatsapp_services.py" afterDir="false" />
-    </list>
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Project Structure Files" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -68,6 +54,19 @@
       <option name="presentableId" value="Default" />
       <updated>1707829754653</updated>
     </task>
+    <task id="LOCAL-00001" summary="Project Structure Files">
+      <option name="closed" value="true" />
+      <created>1707834671165</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1707834671165</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Project Structure Files" />
+    <option name="LAST_COMMIT_MESSAGE" value="Project Structure Files" />
   </component>
 </project>
