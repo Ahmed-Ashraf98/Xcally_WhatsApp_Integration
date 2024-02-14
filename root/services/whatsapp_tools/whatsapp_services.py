@@ -1,15 +1,10 @@
 from typing import Annotated, Any
 from fastapi.responses import PlainTextResponse
+from root.globals import *
 import httpx
 
+
 client = httpx.AsyncClient()
-
-wa_verify_token = "Sana"
-phone_number_id = "209325405605976"
-access_token = "EAARxAciB8DkBO89zuix7B5WE9ZBUdhyZASkavn9XueUM6ajocrQ3DYNSlG3OmoKxKc2pGV8CbZBtZCMa54ihtsDyTDz2FZAdcwJKaMVcb1iMhq3yU1kQIqZCvKzvRGYV6dwXQHB6qoWwE41Gi3BxRZCnidoaDbPGsZA4YNRh0NiM0VZBC1sQVrGEd1HsplajAJ40gsWvh1hwFopV0rfKDxXbj00fmQhQZD"
-wa_request_url = "https://graph.facebook.com/v19.0/"+phone_number_id+"/messages"
-wa_media_url = "https://graph.facebook.com/v19.0/"+phone_number_id+"/media"
-
 def wa_get_media_type_extension(mime_type:str):
 
     """
@@ -98,23 +93,24 @@ async def wa_get_received_messages_details(messages:dict[str,Any]):
     return {"sender_details": contact_obj, "message_type":message_type, "msg_is_media":msg_is_media, "message_data":message_data}
 
 
-async def wa_send_message_to_xcally(sender_obj,msg_type=None,message_content:dict = None, media_file = None):
+# async def wa_send_message_to_whatsapp(sender_obj,msg_type=None,message_content:dict = None, media_file = None):
+#
+#     header_auth = {"Authorization": "Bearer " + access_token}
+#     xcally_agent_num = "201066632344"
+#     response={}
+#     if media_file:
+#         media_file = {'file': media_file}
+#         # to => the XCally agent
+#
+#         form_data = {"messaging_product": "whatsapp","to":xcally_agent_num,"type": msg_type, msg_type:{"id":message_content["id"]}}
+#         # response = await client.post(url=wa_media_url, data=form_data, files=media_file, headers=header_auth)
+#         response = await client.post(url=wa_request_url, json=form_data, headers=header_auth)
+#     else:
+#         json_data = {'messaging_product': 'whatsapp',"to":xcally_agent_num,'type': msg_type,"text":{"preview_url":True,"body":message_content["body"]}}
+#         response = await client.post(url=wa_request_url, json=json_data, headers=header_auth)
+#
+#     return response.json()
 
-    header_auth = {"Authorization": "Bearer " + access_token}
-    xcally_agent_num = "201066632344"
-    response={}
-    if media_file:
-        media_file = {'file': media_file}
-        # to => the XCally agent
-
-        form_data = {"messaging_product": "whatsapp","to":xcally_agent_num,"type": msg_type, msg_type:{"id":message_content["id"]}}
-        # response = await client.post(url=wa_media_url, data=form_data, files=media_file, headers=header_auth)
-        response = await client.post(url=wa_request_url, json=form_data, headers=header_auth)
-    else:
-        json_data = {'messaging_product': 'whatsapp',"to":xcally_agent_num,'type': msg_type,"text":{"preview_url":True,"body":message_content["body"]}}
-        response = await client.post(url=wa_request_url, json=json_data, headers=header_auth)
-
-    return response.json()
 
 async def wa_get_media_details(media_id):
 
@@ -182,8 +178,8 @@ async def wa_upload_media_handler(file,media_type:str) -> dict:
     # for example :  784052817101446
     media_file = None
 
-    media_file = {'file': (file.filename,file.file)}
-    form_data = {'type': media_type, 'messaging_product': 'whatsapp'}
+    media_file = {"file": (file.filename,file.file)}
+    form_data = {"type": media_type, "messaging_product": "whatsapp"}
     header_auth = {"Authorization":"Bearer "+access_token}
     response = await client.post(url=wa_media_url, data=form_data, files=media_file, headers=header_auth)
     return response.json()
