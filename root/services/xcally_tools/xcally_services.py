@@ -1,17 +1,18 @@
 from typing import Annotated, Any
 from fastapi.responses import PlainTextResponse
 from fastapi import Response
-from root.globals import *
+from root.global_vars import *
 import httpx
+import os
 
 
 client = httpx.AsyncClient(verify=False)
 
 
 async def xc_get_attachment_details(attachment_id) -> dict[str,Any]:
-    upload_url = f"{xcally_base_url} + /attachments/{attachment_id}?apikey= + {xcally_api_key}"
+    upload_url = f"{xcally_base_url}/attachments/{attachment_id}?apikey={xcally_api_key}"
     response = await client.get(url=upload_url)
-    result = dict()
+    result = dict[str, Any]
     result = {"status":response.status_code,"data":response.json()}
     return result
 
@@ -58,12 +59,14 @@ async def xc_upload_attachment(media_file):
     upload_url = xcally_base_url+"/attachments?apikey="+xcally_api_key
     attachment_files = {'file': media_file}
     response = await client.post(url=upload_url, files=attachment_files)
-    return response
+    result = dict[str, Any]
+    result = {"status": response.status_code, "data": response.json()}
+    return result
 
 
 async def xc_download_attachment(attachment_id):
 
-    download_url = f"{xcally_base_url}+/attachments/{attachment_id}/download/?apikey={xcally_api_key}"
+    download_url = f"{xcally_base_url}/attachments/{attachment_id}/download/?apikey={xcally_api_key}"
     file_obj = await xc_get_attachment_type_extension(attachment_id)
 
     response = await client.get(url=download_url)
@@ -71,68 +74,60 @@ async def xc_download_attachment(attachment_id):
 
     media_extension = file_obj["file_extension"]
     media_cat = file_obj["mime_type_category"]
-    local_folder_path = r"C:\Users\aashraf\Desktop\Test_Folder"
+    local_folder_path = xcally_local_files_repo
+    full_media_path_without_file = r"{0}\{1}".format(local_folder_path,media_cat, attachment_id, media_extension)
+
+    if not os.path.exists(full_media_path_without_file):
+        os.makedirs(full_media_path_without_file)
+
     full_media_path = r"{0}\{1}\{2}.{3}".format(local_folder_path,media_cat, attachment_id, media_extension)
 
     try:
         with open(full_media_path, 'wb') as file_handler:
             file_handler.write(media_in_binary)
 
-    except:
+    except Exception as ex:
+        print(ex)
         return {"status": "failed", "message": "Error while writing the media file"}
 
     return {"status": "success", "media_local_path": full_media_path,
             "message": "The media has been downloaded successfully"}
 
 
-async def xc_get_event_messages_details(message:dict[str,Any]):
+async def xc_extract_event_message_details(message:dict[str,Any]):
+
 
     contact_details = message["contact"] # the customer details
     contact_phone_num = contact_details["phone"]
-    message_data = None
-    msg_type = None
+    msg_type = "text"
     msg_is_media = False
 
-    if "AttachmentId" not in message.keys():
-        msg_type = "text"
-    else:
-        msg_type = "media"
+    if "AttachmentId" in message.keys():
+
+        msg_type_cat = await xc_get_attachment_type_extension(message["AttachmentId"])
+        msg_type = msg_type_cat["mime_type_category"]
         msg_is_media = True
 
     return {"customer_details": contact_details, "message_type": msg_type, "msg_is_media": msg_is_media,
-            "message_data": message_data}
+            "message_data": message}
 
 
-async def send_message_to_xcally_channel(sender_obj,msg_type=None,message_content:dict = None, file = None):
-
-    response={}
+async def send_message_to_xcally_channel(from_user_num,from_user_name,text_msg:str = None, attachment_Id = None ):
+    response = {}
     request_data = {
-        "phone": sender_obj["wa_id"], # Sender Phone Number
-        "from": sender_obj["profile"]["name"],  # Sender Name
+        "phone": from_user_num,  # Sender Phone Number
+        "from": from_user_name,  # Sender Name
         "mapKey": "firstName"
     }
 
-    if file: # if file is not Null then this message is attachment message
-
-        upload_response = await xc_upload_attachment(file)
-        response_attach_json = upload_response.json()
-
-        if upload_response.status_code == 201:
-
-            #2 Send the message
-            request_data.update({"body": ".","AttachmentId":response_attach_json["id"]}) # body is mandatory and not empty
-            response = await client.post(url=xcally_create_msg_url, json=request_data)
-        else:
-            print("-" * 30)
-            print("===== [ ERROR: Attachment Not Uploaded, Please check the error logs ] ====")
-            print(response_attach_json.json())
-            print("-" * 30)
-
-
+    if attachment_Id:  # if attachment_Id is not Null then this message is attachment message
+        # 2 Send the message
+        request_data.update({"body": ".", "AttachmentId": attachment_Id})  # body is mandatory and not empty
+        response = await client.post(url=xcally_create_msg_url, json=request_data)
     else:
-
-        request_data.update({"body": message_content["body"]})
+        request_data.update({"body": text_msg})
         response = await client.post(url=xcally_create_msg_url, json=request_data)
 
-    print(response.json())
-    return response.json()
+    result = dict[str, Any]
+    result = {"status": response.status_code, "data": response.json()}
+    return result

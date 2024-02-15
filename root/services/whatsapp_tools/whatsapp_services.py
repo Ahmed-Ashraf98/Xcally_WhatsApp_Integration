@@ -1,10 +1,12 @@
 from typing import Annotated, Any
 from fastapi.responses import PlainTextResponse
-from root.globals import *
+from root.global_vars import *
 import httpx
-
+import os
 
 client = httpx.AsyncClient()
+
+
 def wa_get_media_type_extension(mime_type:str):
 
     """
@@ -50,7 +52,7 @@ def wa_get_media_type_extension(mime_type:str):
     return {"file_extension":file_extension,"mime_type_category":mime_type_category}
 
 
-async def wa_get_received_messages_details(messages:dict[str,Any]):
+def wa_extract_messages_details(messages:dict[str,Any]):
 
     """
     :param messages: The received from whatsapp user
@@ -93,23 +95,22 @@ async def wa_get_received_messages_details(messages:dict[str,Any]):
     return {"sender_details": contact_obj, "message_type":message_type, "msg_is_media":msg_is_media, "message_data":message_data}
 
 
-# async def wa_send_message_to_whatsapp(sender_obj,msg_type=None,message_content:dict = None, media_file = None):
-#
-#     header_auth = {"Authorization": "Bearer " + access_token}
-#     xcally_agent_num = "201066632344"
-#     response={}
-#     if media_file:
-#         media_file = {'file': media_file}
-#         # to => the XCally agent
-#
-#         form_data = {"messaging_product": "whatsapp","to":xcally_agent_num,"type": msg_type, msg_type:{"id":message_content["id"]}}
-#         # response = await client.post(url=wa_media_url, data=form_data, files=media_file, headers=header_auth)
-#         response = await client.post(url=wa_request_url, json=form_data, headers=header_auth)
-#     else:
-#         json_data = {'messaging_product': 'whatsapp',"to":xcally_agent_num,'type': msg_type,"text":{"preview_url":True,"body":message_content["body"]}}
-#         response = await client.post(url=wa_request_url, json=json_data, headers=header_auth)
-#
-#     return response.json()
+async def wa_send_message_to_whatsapp_user(customer_phone_num,msg_type=None,message_content:dict = None, media_id = None):
+
+    header_auth = {"Authorization": "Bearer " + access_token}
+    response = {}
+    request_data = {}
+
+    if media_id:
+        request_data = {"messaging_product": "whatsapp","to":customer_phone_num,"type": msg_type, msg_type:{"id":media_id}}
+        response = await client.post(url=wa_request_url, json=request_data, headers=header_auth)
+    else:
+        json_data = {'messaging_product': 'whatsapp',"to":customer_phone_num,'type': msg_type,"text":{"preview_url":True,"body":message_content}}
+        response = await client.post(url=wa_request_url, json=json_data, headers=header_auth)
+
+    result = dict[str, Any]
+    result = {"status": response.status_code, "data": response.json()}
+    return result
 
 
 async def wa_get_media_details(media_id):
@@ -120,11 +121,11 @@ async def wa_get_media_details(media_id):
     if response.status_code == 400 :
         # media id is not found ["Unsupported get request. Object with ID '784052817101446e' does not exist"]
         # Raise an exception or something else
-        return None
+        pass
 
-    if response.status_code == 200:
-        response_in_json = response.json()
-        return response_in_json
+    result = dict[str, Any]
+    result = {"status": response.status_code, "data": response.json()}
+    return result
 
 
 async def wa_download_media(media_id):
@@ -136,11 +137,11 @@ async def wa_download_media(media_id):
 
     # Supported Media Types => audio, document, image, video, sticker
 
-    media_details_obj=await wa_get_media_details(media_id)
-    print(media_details_obj)
-    media_url = media_details_obj["url"]
-    media_mime_type = media_details_obj["mime_type"]
-    media_id = media_details_obj["id"]
+    media_details_response = await wa_get_media_details(media_id)
+    media_data = media_details_response["data"]
+    media_url = media_data["url"]
+    media_mime_type = media_data["mime_type"]
+    media_id = media_data["id"]
     header_auth = {"Authorization": "Bearer " + access_token}
     response = await client.get(url=media_url, headers=header_auth)
 
@@ -148,15 +149,20 @@ async def wa_download_media(media_id):
 
     if response.status_code == 404 :
         # Log that image url is not found or expired , and you are going to get new one
-        media_details_obj = await wa_get_media_details(media_id)
-        media_url = media_details_obj["url"]
-        media_mime_type = media_details_obj["mime_type"]
-        media_id = media_details_obj["id"]
+        media_details_response = await wa_get_media_details(media_id)
+        media_data = media_details_response["data"]
+        media_url = media_data["url"]
+        media_mime_type = media_data["mime_type"]
+        media_id = media_data["id"]
         response = await client.get(url=media_url, headers=header_auth)
 
     media_in_binary = response.read()
     media_extension = wa_get_media_type_extension(media_mime_type)["file_extension"]
-    local_folder_path =r"C:\Users\aashraf\Desktop\Test_Folder"
+    local_folder_path = wa_local_files_repo
+
+    if not os.path.exists(local_folder_path):
+        os.makedirs(local_folder_path)
+
     full_media_path = r"{0}\{1}.{2}".format(local_folder_path,media_id,media_extension)
 
     try:
@@ -169,24 +175,23 @@ async def wa_download_media(media_id):
     return {"status":"success","media_local_path":full_media_path,"message":"The media has been downloaded successfully"}
 
 
-async def wa_upload_media_handler(file,media_type:str) -> dict:
+async def wa_upload_media_handler(filename,file,media_type:str):
     """
     :param file: the media file (image , docs, voice , audio , etc...)
     :param media_type: the type of media, for example : image
     :return: { "id": < The media id stored in meta > }
     """
-    # for example :  784052817101446
-    media_file = None
 
-    media_file = {"file": (file.filename,file.file)}
+    media_file = {"file": (filename,file)}
     form_data = {"type": media_type, "messaging_product": "whatsapp"}
     header_auth = {"Authorization":"Bearer "+access_token}
     response = await client.post(url=wa_media_url, data=form_data, files=media_file, headers=header_auth)
-    return response.json()
+    result = dict[str, Any]
+    result = {"status": response.status_code, "data": response.json()}
+    return result
 
 
-
-async def wa_check_event_type(event_obj:dict[str,Any]):
+def wa_check_event_type(event_obj:dict[str,Any]):
     val_obj = dict()
     val_obj = event_obj["entry"][0]["changes"][0]["value"]
 

@@ -1,5 +1,6 @@
 from root.routers import whatsapp
 from root.routers import xcally
-import root.globals
+import root.global_vars
+
 
 
