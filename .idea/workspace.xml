@@ -4,10 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Support Audio - Video media in the chat">
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Support Audio - Video media in the chat and add the un-supported message content validation">
+      <change afterPath="$PROJECT_DIR$/root/services/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/root/tasks_config.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/routers/whatsapp.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/routers/whatsapp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/services/whatsapp_tools/whatsapp_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/whatsapp_tools/whatsapp_services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/routers/xcally.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/routers/xcally.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/whatsapp_tools/whatsapp_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/whatsapp_services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/xcally_tools/xcally_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/xcally_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -38,6 +44,9 @@
       </UrlAndAccount>
     </option>
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="QODANA_PROBLEMS_VIEW_TAB" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 4
@@ -48,14 +57,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/aashraf/PycharmProjects/Xcally_WhatsApp_Integration"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/aashraf/PycharmProjects/Xcally_WhatsApp_Integration&quot;
   }
-}]]></component>
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\aashraf\PycharmProjects\Xcally_WhatsApp_Integration\root" />
+      <recent name="C:\Users\aashraf\PycharmProjects\Xcally_WhatsApp_Integration\root\services" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -104,7 +119,15 @@
       <option name="project" value="LOCAL" />
       <updated>1708008477021</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Support Audio - Video media in the chat and add the un-supported message content validation">
+      <option name="closed" value="true" />
+      <created>1709107766175</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1709107766175</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -123,6 +146,7 @@
     <MESSAGE value="Update Root Folder Name" />
     <MESSAGE value="XCally APIs and Methods" />
     <MESSAGE value="Support Audio - Video media in the chat" />
-    <option name="LAST_COMMIT_MESSAGE" value="Support Audio - Video media in the chat" />
+    <MESSAGE value="Support Audio - Video media in the chat and add the un-supported message content validation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Support Audio - Video media in the chat and add the un-supported message content validation" />
   </component>
 </project>

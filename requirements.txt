@@ -2,3 +2,5 @@ fastapi
 pydantic
 uvicorn
 httpx # To call External APIs
+celery
+flower
