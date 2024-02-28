@@ -16,25 +16,15 @@ def wa_get_media_type_extension(mime_type:str):
 
     file_extension = ""
     mime_type_category = mime_type[:mime_type.find("/")]
+    the_media_type = mime_type[mime_type.find("/") + 1:]  # for example : if image/jpeg , this will take jpeg only
 
-    if mime_type_category == "image":
-        the_media_type = mime_type[mime_type.find("/")+1:] # if image/jpeg , this will take jpeg only
-        file_extension = the_media_type
-
-    if mime_type_category == "audio":
-        the_media_type = mime_type[mime_type.find("/") + 1:]  # if audio/mp4 , this will take mp4 only
-        file_extension = the_media_type
-
-    if mime_type_category == "video":
-        the_media_type = mime_type[mime_type.find("/") + 1:]  # if video/mp4 , this will take mp4 only
+    if mime_type_category == "image" or mime_type_category == "audio" or mime_type_category == "video" :
         file_extension = the_media_type
 
     if mime_type_category == "text": # plain text document
         file_extension = "txt"
 
     if mime_type_category == "application": # document
-        the_media_type = mime_type[mime_type.find("/") + 1:]  # if application/pdf , this will take mp4 only
-
         """
         For MIME types refer to this link : 
         https://stackoverflow.com/questions/4212861/what-is-a-correct-mime-type-for-docx-pptx-etc
@@ -92,6 +82,9 @@ def wa_extract_messages_details(messages:dict[str,Any]):
         message_data = message_obj["video"]
         msg_is_media = True
 
+    else: # unsupported message content
+        message_data = None
+
     return {"sender_details": contact_obj, "message_type":message_type, "msg_is_media":msg_is_media, "message_data":message_data}
 
 
@@ -105,7 +98,7 @@ async def wa_send_message_to_whatsapp_user(customer_phone_num,msg_type=None,mess
         request_data = {"messaging_product": "whatsapp","to":customer_phone_num,"type": msg_type, msg_type:{"id":media_id}}
         response = await client.post(url=wa_request_url, json=request_data, headers=header_auth)
     else:
-        json_data = {'messaging_product': 'whatsapp',"to":customer_phone_num,'type': msg_type,"text":{"preview_url":True,"body":message_content}}
+        json_data = {"messaging_product": "whatsapp","to":customer_phone_num,'type': msg_type,"text":{"preview_url":True,"body":message_content}}
         response = await client.post(url=wa_request_url, json=json_data, headers=header_auth)
 
     result = dict[str, Any]

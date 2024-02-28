@@ -28,6 +28,13 @@ async def wa_new_message_from_user(wa_msg_data:Annotated[dict[str,Any],Body()]):
 
     message_obj = wa_services.wa_extract_messages_details(wa_msg_data)
 
+    if message_obj.get("message_data") is None:
+        # for example react on the message or sending stickers
+        print("*" * 50)
+        print("UNSUPPORTED MESSAGE CONTENT")
+        print("*" * 50)
+        return None
+
 
     # 2) If media:
 
