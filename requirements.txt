@@ -4,3 +4,4 @@ uvicorn
 httpx # To call External APIs
 celery
 flower
+sqlalchemy

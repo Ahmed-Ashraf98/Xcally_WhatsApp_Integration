@@ -1,12 +1,14 @@
+import json
 from typing import Any
 from root.global_vars import *
 import httpx
-import os
 from root.services import xcally_services as xc_services
-from root.tasks_config import celery
+from root.celery import celery
 from celery import chain
+import os
+import logging
+from root.services.failed_task_trigger import *
 
-# client = httpx.AsyncClient()
 client = httpx.Client()
 
 max_retries_for_tasks = 3
@@ -21,98 +23,75 @@ tasks_retry_delay = 10
     2) Get Media Ttype Extension => wa_get_media_type_extension
 
     3) Download the Media => wa_download_media
-
-    4) Write & Read File Data => wa_write_read_file_data
-
-    5) Send the message to XCally => wa_send_message_to_whatsapp_user
+    
+    4) Upload the Media => xc_upload_attachment
+    
+    5) Send the message to XCally => send_message_to_xcally_channel
  ==================================================================================================================
 
   *********  Process from receiving the message from WA to XCally ( in case the message type is text ) *******
 
-    1)  Send the message to XCally => wa_send_message_to_whatsapp_user
+    1)  Send the message to XCally => send_message_to_xcally_channel
 
  ==================================================================================================================
 """
 
-def new_event_from_wa_handler(wa_msg_data):
-    message_send_response = {}
+if not os.path.exists(r'C:\Users\aashraf\Desktop\WA_XC_Logs'):
+    os.makedirs(r'C:\Users\aashraf\Desktop\WA_XC_Logs')
 
-    # check if the event from the user or from the server
-    event_type = wa_check_event_type(wa_msg_data)
+formatter = logging.Formatter('[ %(asctime)s ] - Code Line : [ %(lineno)d ] - %(name)s - %(levelname)s - %(message)s')
 
-    if event_type == "server_event":
-        # for example 'status' changed to 'delivered' or 'sent' or 'read'
-        print("*" * 50)
-        print("JUST SERVER MESSAGE")
-        print("*" * 50)
-        return None
+error_logger = logging.getLogger(__name__)
+error_fh = logging.FileHandler(r'C:\Users\aashraf\Desktop\WA_XC_Logs\WA_Errors.log')
+error_fh.setFormatter(formatter)
+error_logger.addHandler(error_fh)
+error_logger.setLevel(logging.ERROR)
 
-    # 1) Check if the message is media or just a text and return the result as follows :
-    # {"sender_details": contact_obj, "message_type":message_type, "msg_is_media":msg_is_media, "message_data":message_data}
 
+@celery.task
+def wa_new_message_handler(wa_msg_data):
+    """
+    :param wa_msg_data: The message object
+    :return:
+    """
     message_obj = wa_extract_messages_details(wa_msg_data)
-
-    if message_obj.get("message_data") is None:
-        # for example react on the message or sending stickers
-        print("*" * 50)
-        print("UNSUPPORTED MESSAGE CONTENT")
-        print("*" * 50)
-        return None
-
-    # 2) If media:
+    # message_obj = {"contact_details", "message_type", "msg_is_media", "message_data"}
 
     if message_obj.get("msg_is_media"):
 
-        media_id = message_obj.get("message_data").get("id")
-        # 2.A =>  Download this media, and get the result as follows :
-
-        chain_tasks_for_received_msgs = chain(wa_get_media_details.s(media_id),
+        ch_tasks_for_receive_and_send_media_msgs = chain(wa_get_media_details.s(message_obj),
                                               wa_download_media.s(),
-                                              wa_write_read_file_data.s())
+                                              xc_services.xc_upload_attachment.s(),
+                                              xc_services.send_message_to_xcally_channel.s()
+                                              )
 
-        chain_tasks_for_received_msgs_obj = chain_tasks_for_received_msgs.delay()
+        ch_tasks_for_receive_and_send_media_msgs_obj = ch_tasks_for_receive_and_send_media_msgs.delay()
 
         try:
-            file = chain_tasks_for_received_msgs_obj.get()
-            ch_tasks_for_send_msgs = send_chain_tasks_based_on_msg_type(
-                from_user_num=message_obj.get("sender_details")["wa_id"],
-                from_user_name=message_obj.get("sender_details")["profile"]["name"],
-                file=file
-            )
-
-            ch_tasks_for_send_msgs_obj = ch_tasks_for_send_msgs.delay()
-            try:
-                return ch_tasks_for_send_msgs_obj.get()
-
-            except Exception as exc:
-                # Retry the chain of ch_tasks_for_send_msgs
-                pass
+            return ch_tasks_for_receive_and_send_media_msgs_obj
 
         except Exception as exc:
+            error_logger.error(f"Error while handling the new message from WhatsApp,\n >>> Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
             pass
 
 
     else:  # Not media message
         # 3) Send the message to the XCally and (check if message sent to return the result)
-        ch_tasks_for_send_msgs = send_chain_tasks_based_on_msg_type(
-                from_user_num=message_obj.get("sender_details")["wa_id"],
-                from_user_name=message_obj.get("sender_details")["profile"]["name"],
-                text_msg=message_obj.get("message_data")["body"]
-        )
-        ch_tasks_for_send_msgs_obj = ch_tasks_for_send_msgs.delay()
+        ch_tasks_for_send_txt_msgs = chain(xc_services.send_message_to_xcally_channel.s({"msg_obj":message_obj}))
+        ch_tasks_for_send_txt_msgs_obj = ch_tasks_for_send_txt_msgs.delay()
         try:
-            return ch_tasks_for_send_msgs_obj.get()
+            return ch_tasks_for_send_txt_msgs_obj
         except Exception as exc:
+            error_logger.error(f"Error while handling the new message from WhatsApp,\n >>> Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
             pass
-
 
 def wa_extract_messages_details(messages:dict[str,Any]):
 
     """
     :param messages: The received from whatsapp user
-    :return: An object with the following keys [ sender_details ,message_type , msg_is_media , message_data]
+    :return: An object with the following keys { contact_details ,message_type , msg_is_media , message_data }
     """
 
     # val_obj = entry -> [0] -> changes -> [0] -> value
@@ -151,34 +130,52 @@ def wa_extract_messages_details(messages:dict[str,Any]):
     else: # unsupported message content
         message_data = None
 
-    return {"sender_details": contact_obj, "message_type":message_type, "msg_is_media":msg_is_media, "message_data":message_data}
+    return {"contact_details": contact_obj, "message_type":message_type, "msg_is_media":msg_is_media, "message_data":message_data}
 
 
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def wa_get_media_details(self,media_id):
+def wa_get_media_details(self,data):
+    """
+    :param self: Task instance
+    :param data: An object with the following keys { contact_details ,message_type , msg_is_media , message_data }
+    :return: Object with the following keys {"status", "media_data","msg_obj"}
+    """
+
+    """
+    media_data:{
+      "messaging_product": "whatsapp",
+      "url": "<URL>",
+      "mime_type": "<MIME_TYPE>",
+      "sha256": "<HASH>",
+      "file_size": "<FILE_SIZE>",
+      "id": "<MEDIA_ID>"
+    }
+    """
+
+    media_id = data.get("message_data").get("id")
+    msg_obj = data
 
     header_auth = {"Authorization": "Bearer " + access_token}
     try:
         response = client.get(url="https://graph.facebook.com/v19.0/"+media_id, headers=header_auth)
         response.raise_for_status()
-        return {"status": response.status_code, "data": response.json()}
+        return {"status": response.status_code, "media_data": response.json(),"msg_obj":msg_obj}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while getting the media details from WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while getting the media details from WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
-def wa_get_media_type_extension(media_details):
+def wa_get_media_type_extension(mime_type):
 
     """
-    :param media_details: the url,mime_type,sha256,file_size,id
-    :param self: the task instance
+    :param mime_type: for example : image/jpeg
     :return: object contains file_extension and mime_type_category
     """
-    media_data = media_details["data"]
-    mime_type = media_data["mime_type"]
     file_extension = ""
     mime_type_category = mime_type[:mime_type.find("/")]
     the_media_type = mime_type[mime_type.find("/") + 1:]  # for example : if image/jpeg , this will take jpeg only
@@ -208,19 +205,20 @@ def wa_get_media_type_extension(media_details):
 
 
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def wa_download_media(self,media_data):
+def wa_download_media(self,data):
 
     """
-    :param media_details: dict of {"file_extension","mime_type_category","media_data"}
+    :param data: dict of {"status","media_data","msg_obj"}
     :param self: the task instance
-    :return: the download status along with the local path in case was successfully downloaded
+    :return: {"full_media_path": full_media_path,"msg_obj":data.get("msg_obj")}
 
-    **Note**:media_data key is a dict with the following details {"url","mime_type","sha256","file_size","id"}
+    **Note**:data key is a dict with the following details {"url","mime_type","sha256","file_size","id"}
     """
+
     # Supported Media Types => audio, document, image, video
-    media_url = media_data["data"]["url"]
-    media_id = media_data["data"]["id"]
-    media_type_extension = wa_get_media_type_extension(media_data)
+    media_url = data["media_data"]["url"]
+    media_id = data["media_data"]["id"]
+    media_type_extension = wa_get_media_type_extension(data["media_data"]["mime_type"])
     header_auth = {"Authorization": "Bearer " + access_token}
 
     try:
@@ -232,18 +230,24 @@ def wa_download_media(self,media_data):
         media_extension = media_type_extension["file_extension"]
         media_category = media_type_extension["mime_type_category"]
         local_folder_path = wa_local_files_repo
+        full_media_path_without_file = r"{0}\{1}".format(local_folder_path, media_category)
 
-        if not os.path.exists(local_folder_path):
-            os.makedirs(local_folder_path)
+        if not os.path.exists(full_media_path_without_file):
+            os.makedirs(full_media_path_without_file)
 
         full_media_path = r"{0}\{1}\{2}.{3}".format(local_folder_path,media_category,media_id,media_extension)
 
-        return {"media_in_binary": media_in_binary, "full_media_path": full_media_path}
+        with open(full_media_path, 'wb') as file_handler:
+            file_handler.write(media_in_binary)
+
+        return {"full_media_path": full_media_path,"msg_obj":data.get("msg_obj")}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while downloading the media from WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while downloading the media from WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
@@ -260,50 +264,72 @@ def wa_write_read_file_data(self,downloaded_media_details):
 
 
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def wa_upload_media_handler(self,filename,file,media_type:str):
+def wa_upload_media_handler(self,data):
+
     """
-    :param file: the media file (image , docs, voice , audio , etc...)
-    :param media_type: the type of media, for example : image
-    :return: { "id": < The media id stored in meta > }
+    :param data: {"full_media_path", "msg_obj"}
+    :return: {"status", "media_data","msg_obj"}
     """
 
-    media_file = {"file": (filename,file)}
+    filename = data["msg_obj"]["message_data"]["body"]
+    media_type = data["msg_obj"]["message_type"]
+
     form_data = {"type": media_type, "messaging_product": "whatsapp"}
     header_auth = {"Authorization":"Bearer "+access_token}
 
     try:
+        file = open(data["full_media_path"], "rb")
+        media_file = {"file": (filename, file)}
         response = client.post(url=wa_media_url, data=form_data, files=media_file, headers=header_auth)
         response.raise_for_status()
-        return {"status": response.status_code, "data": response.json()}
+        return {"status": response.status_code, "media_data": response.json(),"msg_obj":data["msg_obj"]}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while uploading the media to WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while uploading the media to WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def wa_send_message_to_whatsapp_user(self,media_data,customer_phone_num,msg_type,message_content):
+def wa_send_message_to_whatsapp_user(self,data):
 
+    """
+    :param self: task instance
+    :param data: {"status", "media_data","msg_obj"}
+    :return:{"status": response.status_code, "response": response.json()}
+    """
+
+    customer_phone_num = data["msg_obj"]["contact_details"]["phone"]
+    msg_type = data["msg_obj"]["message_type"]
     header_auth = {"Authorization": "Bearer " + access_token}
-    response = {}
-    request_data = {}
+    global response
+    global request_data
 
     try:
-        if media_data:
-            media_id = media_data["data"]["id"]
+        if "media_data" in data.keys():
+            media_id = data["media_data"]["id"]
             request_data = {"messaging_product": "whatsapp","to":customer_phone_num,"type": msg_type, msg_type:{"id":media_id}}
+            error_logger.error("---------------------------------------------")
+            error_logger.error(request_data)
+            error_logger.error("---------------------------------------------")
             response = client.post(url=wa_request_url, json=request_data, headers=header_auth)
+            response.raise_for_status()
         else:
+            message_content = data["msg_obj"]["message_data"]["body"]
             json_data = {"messaging_product": "whatsapp","to":customer_phone_num,'type': msg_type,"text":{"preview_url":True,"body":message_content}}
             response = client.post(url=wa_request_url, json=json_data, headers=header_auth)
-        return {"status": response.status_code, "data": response.json()}
+            response.raise_for_status()
+        return {"status": response.status_code, "response": response.json()}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while sending the message to WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while sending the message to WhatsApp,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
@@ -316,32 +342,111 @@ def wa_check_event_type(event_obj:dict[str,Any]):
         return "user_event"
     return "server_event"
 
+def wa_msg_is_valid(event_obj:dict[str,Any]):
+    val_obj = event_obj["entry"][0]["changes"][0]["value"]
+    message_obj = val_obj["messages"][0]
+    message_type = message_obj["type"]
+    global msg_is_valid
+
+    if message_type == "text" or message_type == "image" or message_type == "document" or message_type == "audio" or message_type == "video":
+        msg_is_valid = True
+    else:  # unsupported message content
+        msg_is_valid = False
+
+    return msg_is_valid
+
 def handle_task_exceptions(self, message):
     print(message)
     if self.request.retries < self.max_retries:
         raise self.retry()
-    raise Exception("XCally Task, Max Retries Reached!!, going to retry the chain in failed Queue")
+    raise Exception(message)
 
-def send_chain_tasks_based_on_msg_type(from_user_num, from_user_name, text_msg=None, file=None):
-    if file:
-        chain_tasks_for_send_msgs = chain(
-            xc_services.xc_upload_attachment.s(media_file = file),
-            xc_services.send_message_to_xcally_channel.s(
-                from_user_num=from_user_num,
-                from_user_name=from_user_name,
-                text_msg=None
-            )
-        )
 
-        return chain_tasks_for_send_msgs
+
+def wa_failed_tasks_handler():
+    # Create a session
+    try:
+        with Session() as session:
+            # Fetch data from the 'failed_tasks' table
+            failed_tasks = session.query(FailedTask).all()
+
+            print("="*50)
+            for task in failed_tasks:
+
+                chain_task = generate_chain_task_for_faild_task(task)
+
+                print("="*50)
+                print("Waiting Results")
+                task_obj = chain_task.apply_async(queue="failed_tasks")
+                try:
+                    if task_obj.get():
+                        on_success_for_failed_tasks(task.id)
+                    print(task_obj)
+                except Exception as exc :
+                    on_error_for_failed_tasks(task.id, exception=exc)
+            # Close the session
+            session.close()
+    except Exception as e:
+        print("Error:>>>", e)
+
+
+def on_error_for_failed_tasks(record_task_id, exception):
+    print(f"Error callback triggered: {exception}")
+    # delete old task record
+    delete_task_record(record_task_id)
+
+
+def on_success_for_failed_tasks(record_task_id):
+    print(f"Success callback triggered")
+    # delete old task record
+    delete_task_record(record_task_id)
+
+
+def generate_chain_task_for_faild_task(task):
+
+    global task_sig
+
+    """
+    SQLAlchemy will usually create a column of type VARCHAR or TEXT in the underlying database.
+    The JSON data you insert into this column will be stored as a string.
+    """
+    task_args_str = task.args
+
+    # Replace single quotes with double quotes to make it valid JSON
+    valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true")
+    json_data = json.loads(valid_json_string)
+    task_args_obj = json_data[0]
+    print(json_data[0])
+
+    if task.task_name.endswith("wa_get_media_details"):
+
+        task_sig = chain(wa_get_media_details.s(task_args_obj).set(queue='failed_tasks'),
+                         wa_download_media.s().set(queue='failed_tasks'),
+                         xc_services.xc_upload_attachment.s().set(queue='failed_tasks'),
+                         xc_services.send_message_to_xcally_channel.s().set(queue='failed_tasks'))
+
+    if task.task_name.endswith("wa_download_media"): # the url of the download expired, and you want to start again
+        task_sig = chain(wa_get_media_details.s(task_args_obj["msg_obj"]).set(queue='failed_tasks'),
+                         wa_download_media.s().set(queue='failed_tasks'),
+                         xc_services.xc_upload_attachment.s().set(queue='failed_tasks'),
+                         xc_services.send_message_to_xcally_channel.s().set(queue='failed_tasks'))
+
+    if task.task_name.endswith("xc_upload_attachment"):
+        task_sig = chain(xc_services.xc_upload_attachment.s(task_args_obj).set(queue='failed_tasks'),
+                         xc_services.send_message_to_xcally_channel.s().set(queue='failed_tasks'))
+
+    if task.task_name.endswith("send_message_to_xcally_channel"):
+        task_sig = chain(xc_services.send_message_to_xcally_channel.s(task_args_obj).set(queue='failed_tasks'))
+
+    return task_sig
+
+
+def delete_task_record(task_id):
+    session = Session()
+    task_to_delete = session.query(FailedTask).filter_by(id=task_id).first()
+    if task_to_delete:
+        session.delete(task_to_delete)
+        session.commit()
+        print("Task deleted successfully")
     else:
-        chain_tasks_for_send_msgs = chain(
-            xc_services.send_message_to_xcally_channel.s(
-                attachment_Id = None,
-                from_user_num=from_user_num,
-                from_user_name=from_user_name,
-                text_msg = text_msg
-            )
-        )
-
-        return chain_tasks_for_send_msgs
+        print("Task not found")
