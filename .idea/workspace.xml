@@ -4,23 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Add Celery Queues in tasks_config.py for the New tasks">
-      <change afterPath="$PROJECT_DIR$/root/database/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root/database/db_context.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root/models/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root/models/failed_task.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root/services/failed_task_trigger.py" afterDir="false" />
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Fix Issues">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/celery.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/celery.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/database/db_context.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/database/db_context.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/global_vars.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/global_vars.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/routers/whatsapp.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/routers/whatsapp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/routers/xcally.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/routers/xcally.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/services/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/services/whatsapp_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/whatsapp_services.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/services/xcally_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/xcally_services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/tasks_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/celery.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -153,7 +143,15 @@
       <option name="project" value="LOCAL" />
       <updated>1709154601400</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Fix Issues">
+      <option name="closed" value="true" />
+      <created>1710329838331</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1710329838331</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -175,6 +173,7 @@
     <MESSAGE value="Support Audio - Video media in the chat and add the un-supported message content validation" />
     <MESSAGE value="Add Celery Tasks to the project" />
     <MESSAGE value="Add Celery Queues in tasks_config.py for the New tasks" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add Celery Queues in tasks_config.py for the New tasks" />
+    <MESSAGE value="Fix Issues" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix Issues" />
   </component>
 </project>

@@ -26,7 +26,8 @@ celery.conf.task_routes = {
     'root.services.xcally_services.xc_upload_attachment': {'queue': 'send_msgs'},
     'root.services.xcally_services.send_message_to_xcally_channel': {'queue': 'send_msgs'},
 
-    'root.tasks.failed_tasks': {'queue': 'failed_tasks'}
+    'root.services.xcally_services.xc_failed_tasks_handler': {'queue': 'failed_tasks'},
+    'root.services.whatsapp_services.wa_failed_tasks_handler': {'queue': 'failed_tasks'}
 }
 
 

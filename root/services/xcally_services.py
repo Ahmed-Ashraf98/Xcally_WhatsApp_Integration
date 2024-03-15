@@ -35,13 +35,13 @@ tasks_retry_delay = 10
  ==================================================================================================================
 """
 
-if not os.path.exists(r'C:\Users\aashraf\Desktop\WA_XC_Logs'):
-    os.makedirs(r'C:\Users\aashraf\Desktop\WA_XC_Logs')
+if not os.path.exists(meta_xcally_logs_dir_path):
+    os.makedirs(meta_xcally_logs_dir_path)
 
 formatter = logging.Formatter('[ %(asctime)s ] - Code Line : [ %(lineno)d ] - %(name)s - %(levelname)s - %(message)s')
 
 error_logger = logging.getLogger(__name__)
-error_fh = logging.FileHandler(r'C:\Users\aashraf\Desktop\WA_XC_Logs\WA_Errors.log')
+error_fh = logging.FileHandler(xcally_logs_path)
 error_fh.setFormatter(formatter)
 error_logger.addHandler(error_fh)
 error_logger.setLevel(logging.ERROR)
@@ -317,7 +317,8 @@ def handle_task_exceptions(self, message):
     raise Exception(message)
 
 
-def wa_failed_tasks_handler():
+@celery.task
+def xc_failed_tasks_handler():
     # Create a session
     try:
         with Session() as session:
@@ -330,6 +331,9 @@ def wa_failed_tasks_handler():
             for task in failed_tasks:
                 print(task)
                 chain_task = generate_chain_task_for_faild_task(task)
+
+                if chain_task is None :
+                    continue
 
                 print("=" * 50)
                 print("Waiting Results")
@@ -369,12 +373,8 @@ def generate_chain_task_for_faild_task(task):
 
     # Replace single quotes with double quotes to make it valid JSON
     valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true").replace("None","null")
-    print("Substring around the problematic area:", valid_json_string[max(0, 152 - 20):152 + 20])
-
     json_data = json.loads(valid_json_string)
-
     task_args_obj = json_data[0]
-
 
     if task.task_name.endswith("xc_get_attachment_details"):
         task_sig = chain(xc_get_attachment_details.s(task_args_obj).set(queue='failed_tasks'),
@@ -393,6 +393,9 @@ def generate_chain_task_for_faild_task(task):
 
     if task.task_name.endswith("wa_send_message_to_whatsapp_user"):
         task_sig = chain(wa_services.wa_send_message_to_whatsapp_user.s(task_args_obj).set(queue='failed_tasks'))
+
+    else :
+        return None
 
     return task_sig
 

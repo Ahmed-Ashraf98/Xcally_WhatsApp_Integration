@@ -36,13 +36,13 @@ tasks_retry_delay = 10
  ==================================================================================================================
 """
 
-if not os.path.exists(r'C:\Users\aashraf\Desktop\WA_XC_Logs'):
-    os.makedirs(r'C:\Users\aashraf\Desktop\WA_XC_Logs')
+if not os.path.exists(meta_xcally_logs_dir_path):
+    os.makedirs(meta_xcally_logs_dir_path)
 
 formatter = logging.Formatter('[ %(asctime)s ] - Code Line : [ %(lineno)d ] - %(name)s - %(levelname)s - %(message)s')
 
 error_logger = logging.getLogger(__name__)
-error_fh = logging.FileHandler(r'C:\Users\aashraf\Desktop\WA_XC_Logs\WA_Errors.log')
+error_fh = logging.FileHandler(wa_logs_path)
 error_fh.setFormatter(formatter)
 error_logger.addHandler(error_fh)
 error_logger.setLevel(logging.ERROR)
@@ -363,6 +363,8 @@ def handle_task_exceptions(self, message):
 
 
 
+
+@celery.task
 def wa_failed_tasks_handler():
     # Create a session
     try:
@@ -374,7 +376,8 @@ def wa_failed_tasks_handler():
             for task in failed_tasks:
 
                 chain_task = generate_chain_task_for_faild_task(task)
-
+                if chain_task is None :
+                    continue
                 print("="*50)
                 print("Waiting Results")
                 task_obj = chain_task.apply_async(queue="failed_tasks")
@@ -413,10 +416,9 @@ def generate_chain_task_for_faild_task(task):
     task_args_str = task.args
 
     # Replace single quotes with double quotes to make it valid JSON
-    valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true")
+    valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true").replace("None","null")
     json_data = json.loads(valid_json_string)
     task_args_obj = json_data[0]
-    print(json_data[0])
 
     if task.task_name.endswith("wa_get_media_details"):
 
@@ -438,6 +440,8 @@ def generate_chain_task_for_faild_task(task):
     if task.task_name.endswith("send_message_to_xcally_channel"):
         task_sig = chain(xc_services.send_message_to_xcally_channel.s(task_args_obj).set(queue='failed_tasks'))
 
+    else:
+        return None
     return task_sig
 
 
