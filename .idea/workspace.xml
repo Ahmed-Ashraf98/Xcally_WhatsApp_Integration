@@ -4,20 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Add more global Vars">
-      <change afterPath="$PROJECT_DIR$/root/automation/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/root/services/failed_tasks_services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/celery.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/celery.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/database/db_context.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/database/db_context.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/global_vars.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/config_vars.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/models/failed_task.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/models/failed_task.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/routers/whatsapp.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/routers/whatsapp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/services/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/services/failed_task_trigger.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/automation/failed_task_trigger.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/services/whatsapp_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/whatsapp_services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/services/xcally_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/xcally_services.py" afterDir="false" />
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Add failed task formatting for complex text">
+      <change beforePath="$PROJECT_DIR$/root/services/failed_tasks_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/failed_tasks_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,7 +22,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="master" />
+        <entry key="$PROJECT_DIR$" value="tasks_feature" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -64,14 +52,14 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;tasks__feature&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/aashraf/PycharmProjects/Xcally_WhatsApp_Integration&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/aashraf/PycharmProjects/Xcally_WhatsApp_Integration"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\aashraf\PycharmProjects\Xcally_WhatsApp_Integration\root\automation" />
@@ -167,7 +155,23 @@
       <option name="project" value="LOCAL" />
       <updated>1710535034391</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Add more global Vars">
+      <option name="closed" value="true" />
+      <created>1710644408332</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1710644408332</updated>
+    </task>
+    <task id="LOCAL-00011" summary="Add failed task formatting for complex text">
+      <option name="closed" value="true" />
+      <created>1710644571451</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1710644571451</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -191,6 +195,7 @@
     <MESSAGE value="Add Celery Queues in tasks_config.py for the New tasks" />
     <MESSAGE value="Fix Issues" />
     <MESSAGE value="Add more global Vars" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add more global Vars" />
+    <MESSAGE value="Add failed task formatting for complex text" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add failed task formatting for complex text" />
   </component>
 </project>

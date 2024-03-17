@@ -113,7 +113,7 @@ def generate_chain_task_for_faild_task(task):
                          wa_services.wa_upload_media_handler.s().set(queue='failed_tasks'),
                          wa_services.wa_send_message_to_whatsapp_user.s().set(queue='failed_tasks'))
 
-    elif task.task_name.endswith("xc_download_attachment"):  # the url of the download expired, and you want to start again
+    elif task.task_name.endswith("xc_download_attachment"):
         task_sig = chain(xc_services.xc_download_attachment.s(task_args_obj).set(queue='failed_tasks'),
                          wa_services.wa_upload_media_handler.s().set(queue='failed_tasks'),
                          wa_services.wa_send_message_to_whatsapp_user.s().set(queue='failed_tasks'))
