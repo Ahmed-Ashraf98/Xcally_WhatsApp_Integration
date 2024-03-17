@@ -1,13 +1,13 @@
 import json
 from typing import Any
-from root.global_vars import *
+from root.config_vars import *
 import httpx
 from root.services import xcally_services as xc_services
 from root.celery import celery
 from celery import chain
 import os
 import logging
-from root.services.failed_task_trigger import *
+from root.automation.failed_task_trigger import *
 
 client = httpx.Client()
 
@@ -364,93 +364,3 @@ def handle_task_exceptions(self, message):
 
 
 
-@celery.task
-def wa_failed_tasks_handler():
-    # Create a session
-    try:
-        with Session() as session:
-            # Fetch data from the 'failed_tasks' table
-            failed_tasks = session.query(FailedTask).all()
-
-            print("="*50)
-            for task in failed_tasks:
-
-                chain_task = generate_chain_task_for_faild_task(task)
-                if chain_task is None :
-                    continue
-                print("="*50)
-                print("Waiting Results")
-                task_obj = chain_task.apply_async(queue="failed_tasks")
-                try:
-                    if task_obj.get():
-                        on_success_for_failed_tasks(task.id)
-                    print(task_obj)
-                except Exception as exc :
-                    on_error_for_failed_tasks(task.id, exception=exc)
-            # Close the session
-            session.close()
-    except Exception as e:
-        print("Error:>>>", e)
-
-
-def on_error_for_failed_tasks(record_task_id, exception):
-    print(f"Error callback triggered: {exception}")
-    # delete old task record
-    delete_task_record(record_task_id)
-
-
-def on_success_for_failed_tasks(record_task_id):
-    print(f"Success callback triggered")
-    # delete old task record
-    delete_task_record(record_task_id)
-
-
-def generate_chain_task_for_faild_task(task):
-
-    global task_sig
-
-    """
-    SQLAlchemy will usually create a column of type VARCHAR or TEXT in the underlying database.
-    The JSON data you insert into this column will be stored as a string.
-    """
-    task_args_str = task.args
-
-    # Replace single quotes with double quotes to make it valid JSON
-    valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true").replace("None","null")
-    json_data = json.loads(valid_json_string)
-    task_args_obj = json_data[0]
-
-    if task.task_name.endswith("wa_get_media_details"):
-
-        task_sig = chain(wa_get_media_details.s(task_args_obj).set(queue='failed_tasks'),
-                         wa_download_media.s().set(queue='failed_tasks'),
-                         xc_services.xc_upload_attachment.s().set(queue='failed_tasks'),
-                         xc_services.send_message_to_xcally_channel.s().set(queue='failed_tasks'))
-
-    if task.task_name.endswith("wa_download_media"): # the url of the download expired, and you want to start again
-        task_sig = chain(wa_get_media_details.s(task_args_obj["msg_obj"]).set(queue='failed_tasks'),
-                         wa_download_media.s().set(queue='failed_tasks'),
-                         xc_services.xc_upload_attachment.s().set(queue='failed_tasks'),
-                         xc_services.send_message_to_xcally_channel.s().set(queue='failed_tasks'))
-
-    if task.task_name.endswith("xc_upload_attachment"):
-        task_sig = chain(xc_services.xc_upload_attachment.s(task_args_obj).set(queue='failed_tasks'),
-                         xc_services.send_message_to_xcally_channel.s().set(queue='failed_tasks'))
-
-    if task.task_name.endswith("send_message_to_xcally_channel"):
-        task_sig = chain(xc_services.send_message_to_xcally_channel.s(task_args_obj).set(queue='failed_tasks'))
-
-    else:
-        return None
-    return task_sig
-
-
-def delete_task_record(task_id):
-    session = Session()
-    task_to_delete = session.query(FailedTask).filter_by(id=task_id).first()
-    if task_to_delete:
-        session.delete(task_to_delete)
-        session.commit()
-        print("Task deleted successfully")
-    else:
-        print("Task not found")

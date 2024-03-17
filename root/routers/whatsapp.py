@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Body, Request, Response
 from typing import Annotated, Any
 from fastapi.responses import PlainTextResponse
-from root.global_vars import *
+from root.config_vars import *
 from root.services.whatsapp_services import wa_new_message_handler,wa_check_event_type,wa_msg_is_valid
 
 

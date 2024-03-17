@@ -10,6 +10,7 @@ class FailedTask(Base):
     id = Column(String, primary_key=True)
     timestamp = Column(DateTime, default=datetime.datetime.now)
     task_name = Column(String)
+    msg_type = Column(String)
     args = Column(JSON)
     kwargs = Column(String)
     exception = Column(String)

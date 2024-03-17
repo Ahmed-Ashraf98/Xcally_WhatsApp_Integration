@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from root.global_vars import db_path
+from root.config_vars import db_path
 from root.models.failed_task import Base
 
 

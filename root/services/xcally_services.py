@@ -2,12 +2,12 @@ import json
 from typing import Any
 from root.celery import celery
 from celery import chain
-from root.global_vars import *
+from root.config_vars import *
 import httpx
 import os
 from root.services import whatsapp_services as wa_services
 import logging
-from root.services.failed_task_trigger import *
+from root.automation.failed_task_trigger import *
 
 client = httpx.Client(verify=False)
 
@@ -84,6 +84,18 @@ def xc_extract_event_message_details(message:dict[str,Any]):
     msg_type = "text"
     msg_is_media = False
 
+    # delete un-needed data
+    # "interface":"SIP/ashraf",
+    # "Interaction"
+    # "Contact"
+
+    message.pop("interface")
+    message.pop("Interaction")
+    message.pop("Contact")
+    message.pop("contact")# already stored in contact_obj
+
+    # delete un-needed info from contact obj
+
     if "AttachmentId" in message.keys():
 
         # msg_type_cat = xc_get_attachment_type_extension(message["AttachmentId"])
@@ -115,7 +127,7 @@ def xc_get_attachment_details(self,data) -> dict[str,Any]:
     try:
         response = client.get(url=attachment_url)
         response.raise_for_status()
-        return {"status":response.status_code,"media_data":response.json(),"msg_obj":data}
+        return {"media_data":response.json(),"msg_obj":data}
 
     except httpx.HTTPError as exc:
         error_logger.error(f"Error while getting attachment details from XCally,\n >>> Error details : {exc}")
@@ -235,7 +247,7 @@ def send_message_to_xcally_channel(self,data):
     """
 
     :param self:
-    :param data: {status, "media_data","msg_obj"}  or {"msg_obj"}
+    :param data: { "media_data","msg_obj"}  or {"msg_obj"}
     :return:
     """
     global response
@@ -261,7 +273,7 @@ def send_message_to_xcally_channel(self,data):
             response = client.post(url=xcally_create_msg_url, json=request_data)
             response.raise_for_status()
 
-        return {"status": response.status_code, "response": response.json()}
+        return {"response": response.json()}
 
     except httpx.HTTPError as exc:
         error_logger.error(f"Error while sending the to XCally channel,\n >>> Error details : {exc}")
@@ -278,7 +290,7 @@ def xc_upload_attachment(self,data):
 
     :param self: The task instance
     :param data: {"full_media_path","msg_obj"}
-    :return: {status, "media_data","msg_obj"}
+    :return: {"media_data","msg_obj"}
     """
 
     """
@@ -297,7 +309,7 @@ def xc_upload_attachment(self,data):
         attachment_files = {'file': media_file}
         response = client.post(url=upload_url, files=attachment_files)
         response.raise_for_status()
-        return {"status": response.status_code, "media_data": response.json(),"msg_obj":data.get("msg_obj")}
+        return {"media_data": response.json(),"msg_obj":data.get("msg_obj")}
 
     except httpx.HTTPError as exc:
         error_logger.error(f"Error while uploading the attachment files to XCally,\n >>> Error details : {exc}")
@@ -315,97 +327,3 @@ def handle_task_exceptions(self, message):
     if self.request.retries < self.max_retries:
         raise self.retry()
     raise Exception(message)
-
-
-@celery.task
-def xc_failed_tasks_handler():
-    # Create a session
-    try:
-        with Session() as session:
-            # Fetch data from the 'failed_tasks' table
-            failed_tasks = session.query(FailedTask).all()
-
-            print("=" * 50)
-            print(failed_tasks)
-            print("=" * 50)
-            for task in failed_tasks:
-                print(task)
-                chain_task = generate_chain_task_for_faild_task(task)
-
-                if chain_task is None :
-                    continue
-
-                print("=" * 50)
-                print("Waiting Results")
-                task_obj = chain_task.apply_async(queue="failed_tasks")
-                try:
-                    if task_obj.get():
-                        on_success_for_failed_tasks(task.id)
-                    print(task_obj)
-                except Exception as exc:
-                    on_error_for_failed_tasks(task.id, exception=exc)
-            # Close the session
-            session.close()
-    except Exception as e:
-        print("Error:>>>", e)
-
-
-def on_error_for_failed_tasks(record_task_id, exception):
-    print(f"Error callback triggered: {exception}")
-    # delete old task record
-    delete_task_record(record_task_id)
-
-
-def on_success_for_failed_tasks(record_task_id):
-    print(f"Success callback triggered")
-    # delete old task record
-    delete_task_record(record_task_id)
-
-
-def generate_chain_task_for_faild_task(task):
-    global task_sig
-
-    """
-    SQLAlchemy will usually create a column of type VARCHAR or TEXT in the underlying database.
-    The JSON data you insert into this column will be stored as a string.
-    """
-    task_args_str = task.args
-
-    # Replace single quotes with double quotes to make it valid JSON
-    valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true").replace("None","null")
-    json_data = json.loads(valid_json_string)
-    task_args_obj = json_data[0]
-
-    if task.task_name.endswith("xc_get_attachment_details"):
-        task_sig = chain(xc_get_attachment_details.s(task_args_obj).set(queue='failed_tasks'),
-                         xc_download_attachment.s().set(queue='failed_tasks'),
-                         wa_services.wa_upload_media_handler.s().set(queue='failed_tasks'),
-                         wa_services.wa_send_message_to_whatsapp_user.s().set(queue='failed_tasks'))
-
-    if task.task_name.endswith("xc_download_attachment"):  # the url of the download expired, and you want to start again
-        task_sig = chain(xc_download_attachment.s(task_args_obj).set(queue='failed_tasks'),
-                         wa_services.wa_upload_media_handler.s().set(queue='failed_tasks'),
-                         wa_services.wa_send_message_to_whatsapp_user.s().set(queue='failed_tasks'))
-
-    if task.task_name.endswith("wa_upload_media_handler"):
-        task_sig = chain(wa_services.wa_upload_media_handler.s(task_args_obj).set(queue='failed_tasks'),
-                         wa_services.wa_send_message_to_whatsapp_user.s().set(queue='failed_tasks'))
-
-    if task.task_name.endswith("wa_send_message_to_whatsapp_user"):
-        task_sig = chain(wa_services.wa_send_message_to_whatsapp_user.s(task_args_obj).set(queue='failed_tasks'))
-
-    else :
-        return None
-
-    return task_sig
-
-
-def delete_task_record(task_id):
-    session = Session()
-    task_to_delete = session.query(FailedTask).filter_by(id=task_id).first()
-    if task_to_delete:
-        session.delete(task_to_delete)
-        session.commit()
-        print("Task deleted successfully")
-    else:
-        print("Task not found")
