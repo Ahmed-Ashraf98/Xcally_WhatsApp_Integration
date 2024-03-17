@@ -6,6 +6,6 @@ router = APIRouter(prefix="/xcally_webhook",tags=["xcally"])
 async def xcally_new_message_from_agent(request:Request):
 
     result_of_request = await request.json()
-    xc_services.new_event_from_xcally_handler(result_of_request)
+    xc_services.xc_new_message_handler.delay(result_of_request)
     return {"message": "XCally Tasks has been started ....."}
 

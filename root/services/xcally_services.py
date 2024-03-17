@@ -1,10 +1,13 @@
-from typing import Annotated, Any
-from root.tasks_config import celery
+import json
+from typing import Any
+from root.celery import celery
 from celery import chain
-from root.global_vars import *
+from root.config_vars import *
 import httpx
 import os
 from root.services import whatsapp_services as wa_services
+import logging
+from root.automation.failed_task_trigger import *
 
 client = httpx.Client(verify=False)
 
@@ -20,92 +23,133 @@ tasks_retry_delay = 10
 
     3) Download the Attachment => xc_download_attachment
 
-    4) Write & Read File Data => xc_write_read_file_data
+    4) Upload the Attachment => wa_upload_media_handler
 
-    5) Send the message to WA => send_message_to_xcally_channel
+    5) Send the message to WA => wa_send_message_to_whatsapp_user
  ==================================================================================================================
 
   *********  Process from receiving the message from XCally to WA ( in case the message type is text ) *******
 
-    1)  Send the message to WA => send_message_to_xcally_channel
+    1)  Send the message to WA => wa_send_message_to_whatsapp_user
 
  ==================================================================================================================
 """
 
+if not os.path.exists(meta_xcally_logs_dir_path):
+    os.makedirs(meta_xcally_logs_dir_path)
 
-def new_event_from_xcally_handler(request_obj):
+formatter = logging.Formatter('[ %(asctime)s ] - Code Line : [ %(lineno)d ] - %(name)s - %(levelname)s - %(message)s')
+
+error_logger = logging.getLogger(__name__)
+error_fh = logging.FileHandler(xcally_logs_path)
+error_fh.setFormatter(formatter)
+error_logger.addHandler(error_fh)
+error_logger.setLevel(logging.ERROR)
+
+@celery.task
+def xc_new_message_handler(request_obj):
+
     message_obj = xc_extract_event_message_details(request_obj)
-    send_msg_to_wa_customer_response = {}
-    customer_details = message_obj["customer_details"]
-    message_type = message_obj["message_type"]
-
+    # {"contact_details": contact_obj, "message_type": msg_type, "msg_is_media": msg_is_media, "message_data": message}
     if message_obj["msg_is_media"]:
-        # Download the attachment first
-        attachment_id = message_obj["message_data"]["AttachmentId"]
-        # this chain should return file to be uploaded
-        chain_tasks_for_received_msgs = chain(xc_get_attachment_details.s(attachment_id),
-                                              xc_download_attachment.s(attachment_id=attachment_id),
-                                              xc_write_read_file_data.s())
 
-        ch_tasks_for_received_msgs_obj = chain_tasks_for_received_msgs.delay()
+        ch_tasks_for_receive_and_send_media_msgs = chain(xc_get_attachment_details.s(message_obj),
+                                                         xc_download_attachment.s(),
+                                                         wa_services.wa_upload_media_handler.s(),
+                                                         wa_services.wa_send_message_to_whatsapp_user.s())
+
+        ch_tasks_for_receive_and_send_media_msgs_obj = ch_tasks_for_receive_and_send_media_msgs.delay()
 
         try:
-            file = ch_tasks_for_received_msgs_obj.get()
-            ## Send the message to the customer ( Meta API )
-            ch_tasks_for_send_msgs = send_chain_tasks_based_on_msg_type(message_body=message_obj["message_data"]["body"],
-                                                                        file=file,
-                                                                        msg_type=message_type,
-                                                                        customer_phone_num=customer_details["phone"])
-            ch_tasks_for_send_msgs_obj = ch_tasks_for_send_msgs.delay()
-            try:
-                return ch_tasks_for_send_msgs_obj.get()
-
-            except Exception as exc:
-                # Retry the chain of ch_tasks_for_send_msgs
-                pass
-
+            return ch_tasks_for_receive_and_send_media_msgs_obj
         except Exception as exc:
+            error_logger.error(f"Error while handling new message from XCally,\n Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
             pass
 
     else: # if not media
-        ch_tasks_for_send_msgs = send_chain_tasks_based_on_msg_type(customer_phone_num=customer_details["phone"],
-                                                                    msg_type=message_type,
-                                                                    message_body=message_obj["message_data"]["body"])
-        ch_tasks_for_send_msgs_obj = ch_tasks_for_send_msgs.delay()
+        ch_tasks_for_send_txt_msgs = chain(wa_services.wa_send_message_to_whatsapp_user.s({"msg_obj":message_obj}))
+        ch_tasks_for_send_txt_msgs_obj = ch_tasks_for_send_txt_msgs.delay()
         try:
-            return ch_tasks_for_send_msgs_obj.get()
+            return ch_tasks_for_send_txt_msgs_obj
         except Exception as exc:
+            error_logger.error(f"Error while handling new message from XCally,\n Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
             pass
 
 
+def xc_extract_event_message_details(message:dict[str,Any]):
+
+    contact_obj= message["contact"] # the customer details
+    msg_type = "text"
+    msg_is_media = False
+
+    # delete un-needed data
+    # "interface":"SIP/ashraf",
+    # "Interaction"
+    # "Contact"
+
+    message.pop("interface")
+    message.pop("Interaction")
+    message.pop("Contact")
+    message.pop("contact")# already stored in contact_obj
+
+    # delete un-needed info from contact obj
+
+    if "AttachmentId" in message.keys():
+
+        # msg_type_cat = xc_get_attachment_type_extension(message["AttachmentId"])
+        # msg_type = msg_type_cat["mime_type_category"]
+        msg_is_media = True
+
+    return {"contact_details": contact_obj, "message_type": msg_type, "msg_is_media": msg_is_media,
+            "message_data": message}
+
+
 # 1) Get Attachment Details
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def xc_get_attachment_details(self,attachment_id) -> dict[str,Any]:
+def xc_get_attachment_details(self,data) -> dict[str,Any]:
+    """
+    :param self: The task instance
+    :param data: An object with the following keys {"contact_details": contact_obj, "message_type": msg_type, "msg_is_media": msg_is_media,"message_data": message}
+    :return: {"status","media_data","msg_obj"}
+    """
+    # TODO :Document the response result of getting attachment details
+    """
+    media_data :{
+    
+    }
+    """
 
+    attachment_id = data["message_data"]["AttachmentId"]
     attachment_url = f"{xcally_base_url}/attachments/{attachment_id}?apikey={xcally_api_key}"
 
     try:
         response = client.get(url=attachment_url)
         response.raise_for_status()
-        return {"status":response.status_code,"data":response.json()}
+        return {"media_data":response.json(),"msg_obj":data}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while getting attachment details from XCally,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while getting attachment details from XCally,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
 # 2) Get Attachment Ttype Extension
 def xc_get_attachment_type_extension(attachment_details):
 
-    file_extension = None
-    media_obj = attachment_details
+    # TODO : Document the attachment_details keys
 
-    media_data = media_obj["data"]
-    mime_type = media_data["type"]
+    """
+    :param attachment_details: ??????
+    :return: {"file_extension": file_extension, "mime_type_category": mime_type_category}
+    """
+    file_extension = None
+    attachment_details = attachment_details
+    mime_type = attachment_details["type"]
     mime_type_category = mime_type[:mime_type.find("/")]
     the_media_type = mime_type[mime_type.find("/") + 1:] # if image/jpeg , this will take jpeg only
 
@@ -141,10 +185,19 @@ def xc_get_attachment_type_extension(attachment_details):
 
 # 3) Download the Attachment
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def xc_download_attachment(self, attachment_details, attachment_id):
+def xc_download_attachment(self, data):
+    """
+    :param self: Task instance
+    :param data: An object of {"status":response.status_code,"media_data":response.json(),"msg_obj":data}
+    :return: {"full_media_path": full_media_path, "msg_obj":data["msg_obj"]}
+    """
+    #
+    attachment_id = data["msg_obj"]["message_data"]["AttachmentId"]
     download_url = f"{xcally_base_url}/attachments/{attachment_id}/download/?apikey={xcally_api_key}"
-
+    attachment_details = data["media_data"]
     file_obj = xc_get_attachment_type_extension(attachment_details)
+    msg_type = file_obj["mime_type_category"]
+    data["msg_obj"]["message_type"] = msg_type
 
     try:
         response = client.get(url=download_url)
@@ -153,20 +206,24 @@ def xc_download_attachment(self, attachment_details, attachment_id):
         media_extension = file_obj["file_extension"]
         media_category = file_obj["mime_type_category"]
         local_folder_path = xcally_local_files_repo
-        full_media_path_without_file = r"{0}\{1}".format(local_folder_path, media_category, attachment_id,
-                                                         media_extension)
+        full_media_path_without_file = r"{0}\{1}".format(local_folder_path, media_category)
 
         if not os.path.exists(full_media_path_without_file):
             os.makedirs(full_media_path_without_file)
 
         full_media_path = r"{0}\{1}\{2}.{3}".format(local_folder_path, media_category, attachment_id, media_extension)
 
-        return {"media_in_binary": media_in_binary, "full_media_path": full_media_path}
+        with open(full_media_path, 'wb+') as file_handler:
+            file_handler.write(media_in_binary)
+
+        return {"full_media_path": full_media_path, "msg_obj":data["msg_obj"]}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while downloading the attachment from XCally,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while downloading the attachment from XCally,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
@@ -186,8 +243,17 @@ def xc_write_read_file_data(self,downloaded_media_details):
 # 5) Send the message to whatsapp user
 
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def send_message_to_xcally_channel(self,from_user_num,from_user_name,text_msg:str = None, attachment_Id = None ):
-    response = {}
+def send_message_to_xcally_channel(self,data):
+    """
+
+    :param self:
+    :param data: { "media_data","msg_obj"}  or {"msg_obj"}
+    :return:
+    """
+    global response
+    from_user_num = data["msg_obj"]["contact_details"]["wa_id"]
+    from_user_name = data["msg_obj"]["contact_details"]["profile"]["name"]
+
     request_data = {
         "phone": from_user_num,  # Sender Phone Number
         "from": from_user_name,  # Sender Name
@@ -195,84 +261,69 @@ def send_message_to_xcally_channel(self,from_user_num,from_user_name,text_msg:st
     }
 
     try:
-        if attachment_Id:  # if attachment_Id is not Null then this message is attachment message
+        if "media_data" in data.keys():  # if media_data is not Null then this message is attachment message
             # 2 Send the message
-            request_data.update({"body": ".", "AttachmentId": attachment_Id})  # body is mandatory and not empty
+            attachment_id = data["media_data"]["id"]
+            request_data.update({"body": ".", "AttachmentId": attachment_id})  # body is mandatory and not empty
             response = client.post(url=xcally_create_msg_url, json=request_data)
+            response.raise_for_status()
         else:
+            text_msg = data["msg_obj"]["message_data"]["body"]
             request_data.update({"body": text_msg})
             response = client.post(url=xcally_create_msg_url, json=request_data)
+            response.raise_for_status()
 
-        return {"status": response.status_code, "data": response.json()}
+        return {"response": response.json()}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while sending the to XCally channel,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while sending the to XCally channel,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
 @celery.task(bind=True, max_retries=max_retries_for_tasks, default_retry_delay=tasks_retry_delay)
-def xc_upload_attachment(self,media_file):
+def xc_upload_attachment(self,data):
+    """
+
+    :param self: The task instance
+    :param data: {"full_media_path","msg_obj"}
+    :return: {"media_data","msg_obj"}
+    """
+
+    """
+    media_data:
+    {
+        
+    }
+    """
+
     upload_url = xcally_base_url+"/attachments?apikey="+xcally_api_key
-    attachment_files = {'file': media_file}
+
+    file_path = data.get("full_media_path")
 
     try:
+        media_file = open(file_path,"rb")
+        attachment_files = {'file': media_file}
         response = client.post(url=upload_url, files=attachment_files)
-        return {"status": response.status_code, "data": response.json()}
+        response.raise_for_status()
+        return {"media_data": response.json(),"msg_obj":data.get("msg_obj")}
 
     except httpx.HTTPError as exc:
+        error_logger.error(f"Error while uploading the attachment files to XCally,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "HTTP errors: \n" + exc.__str__())
 
     except Exception as exc:
+        error_logger.error(f"Error while uploading the attachment files to XCally,\n >>> Error details : {exc}")
         handle_task_exceptions(self, "Caught unexpected exception: \n" + exc.__str__())
 
 
-def xc_extract_event_message_details(message:dict[str,Any]):
-
-    contact_details = message["contact"] # the customer details
-    msg_type = "text"
-    msg_is_media = False
-
-    if "AttachmentId" in message.keys():
-
-        msg_type_cat = xc_get_attachment_type_extension(message["AttachmentId"])
-        msg_type = msg_type_cat["mime_type_category"]
-        msg_is_media = True
-
-    return {"customer_details": contact_details, "message_type": msg_type, "msg_is_media": msg_is_media,
-            "message_data": message}
 
 
 def handle_task_exceptions(self, message):
     print(message)
     if self.request.retries < self.max_retries:
         raise self.retry()
-    raise Exception("XCally Task, Max Retries Reached!!, going to retry the chain in failed Queue")
-
-def send_chain_tasks_based_on_msg_type(customer_phone_num, msg_type, message_body, file=None):
-    if file:
-        chain_tasks_for_send_msgs = chain(
-            wa_services.wa_upload_media_handler.s(
-                filename=message_body,
-                media_type=msg_type,
-                file = file),
-            wa_services.wa_send_message_to_whatsapp_user.s(
-                customer_phone_num=customer_phone_num,
-                msg_type=msg_type,
-                message_content=None
-            )
-        )
-
-        return chain_tasks_for_send_msgs
-    else:
-        chain_tasks_for_send_msgs = chain(
-            wa_services.wa_send_message_to_whatsapp_user.s(
-                media_data = None,
-                customer_phone_num=customer_phone_num,
-                msg_type = msg_type,
-                message_content = message_body
-            )
-        )
-
-        return chain_tasks_for_send_msgs
+    raise Exception(message)

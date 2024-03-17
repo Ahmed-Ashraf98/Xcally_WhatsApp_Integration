@@ -1,15 +1,34 @@
 from fastapi import APIRouter, Body, Request, Response
 from typing import Annotated, Any
 from fastapi.responses import PlainTextResponse
-from root.global_vars import *
-from root.services.whatsapp_services import new_event_from_wa_handler
+from root.config_vars import *
+from root.services.whatsapp_services import wa_new_message_handler,wa_check_event_type,wa_msg_is_valid
 
 
 router = APIRouter(prefix="/wa_webhook",tags=["whatsapp"])
 
+
 @router.post("",summary="Endpoint for listening to any eve")
 async def wa_new_message_from_user(wa_msg_data:Annotated[dict[str,Any],Body()]):
-    new_event_from_wa_handler(wa_msg_data)
+
+    # check if the event from the user or from the server
+    event_type = wa_check_event_type(wa_msg_data)
+
+    if event_type == "server_event":
+        # for example 'status' changed to 'delivered' or 'sent' or 'read'
+        print("*" * 50)
+        print("JUST SERVER MESSAGE")
+        print("*" * 50)
+        return None
+
+    if not wa_msg_is_valid(wa_msg_data):
+        # for example react on the message or sending stickers
+        print("*" * 50)
+        print("UNSUPPORTED MESSAGE CONTENT")
+        print("*" * 50)
+        return None
+
+    wa_new_message_handler.delay(wa_msg_data)
     return {"message":"WA Tasks has been started ....."}
 
 

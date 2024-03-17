@@ -9,3 +9,8 @@ app = FastAPI()
 app.include_router(wa_router)
 app.include_router(xcally_router)
 
+
+
+# ========================== [ Run Fast API ] ==================================
+
+# uvicorn root.main:app --reload
