@@ -1,4 +1,6 @@
 import json
+import time
+
 from root.services import xcally_services as xc_services
 from root.services import whatsapp_services as wa_services
 from root.celery import celery
@@ -32,6 +34,8 @@ def failed_tasks_handler():
                     print("Trying task")
                     while task_obj.status == "PENDING":
                         print("Waiting result .........")
+                        time.sleep(30) # 0.5 minute
+
                     if task_obj.status == "SUCCESS":
                         on_success_for_failed_tasks(task.id)
                     print(task_obj)

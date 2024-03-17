@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Remove wrong comment">
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Fix issues">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/automation/failed_task_trigger.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/automation/failed_task_trigger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/config_vars.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/config_vars.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/database/db_context.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/database/db_context.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/failed_tasks_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/failed_tasks_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,14 +56,14 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "last_opened_file_path": "C:/Users/aashraf/PycharmProjects/Xcally_WhatsApp_Integration"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/aashraf/PycharmProjects/Xcally_WhatsApp_Integration&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\aashraf\PycharmProjects\Xcally_WhatsApp_Integration\root\automation" />
@@ -181,7 +183,15 @@
       <option name="project" value="LOCAL" />
       <updated>1710644985310</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Fix issues">
+      <option name="closed" value="true" />
+      <created>1710645796757</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1710645796757</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -207,6 +217,7 @@
     <MESSAGE value="Add more global Vars" />
     <MESSAGE value="Add failed task formatting for complex text" />
     <MESSAGE value="Remove wrong comment" />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove wrong comment" />
+    <MESSAGE value="Fix issues" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix issues" />
   </component>
 </project>

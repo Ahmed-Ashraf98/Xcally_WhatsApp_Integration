@@ -5,3 +5,4 @@ httpx # To call External APIs
 celery
 flower
 sqlalchemy
+psycopg2 # in case postgresql

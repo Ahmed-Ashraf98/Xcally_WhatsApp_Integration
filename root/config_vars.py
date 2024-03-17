@@ -7,7 +7,7 @@ db_dir = "C:/Users/aashraf/Desktop"
 
 wa_verify_token = "Sana"
 phone_number_id = "209325405605976"
-access_token = "EAARxAciB8DkBO7AkEN96DARi5S1pKnEAcV5WeCZCD3Asr4z7WoH4JfMg2l6FnDOpqaXmQGXqE7MO9ocM62zZCpZBgYHZCNqhcQiuhA21zT6KOyHV68RJpQgii3v4CFCfX9MAaK1E4Gq9MruSKEaH3k8ujabSE6QJBwlpG5ZAHVYLB8Jes0wG6r1NtsdmK2KfM25WuFlzh012XuDBAMC4ty1iZB3DMZD"
+access_token = "EAARxAciB8DkBO4a6GneHbbmZAG4BZAfS5CRd6pPryuTMqw1G3HyNXSz4TdxQRZAnRSrrS2U8kDqI0J9LYwZAUkBefUCMugcT8xvAWwqy1Ge3x1tz4zgw4EkktPXs1HzxcEH5HDwo6qsCqBncpmZCucVBFm9XhwxnhhmywSnWCU73tphFqAZCl59OJBF6T0zvNHygZADJ92P4cheww1oetZAnQO3dmlQZD"
 wa_base_url = "https://graph.facebook.com/v19.0/" + phone_number_id
 wa_request_url = wa_base_url + "/messages"
 wa_media_url = wa_base_url + "/media"
@@ -32,4 +32,5 @@ wa_logs_path = r'{0}\WA_XC_Logs\WA_Errors.log'.format(main_dir)
 
 # ======================================================= DB Setup ================================================
 
-db_path = 'sqlite:///{0}/failed_tasks_db.db'.format(db_dir)
+# db_path = 'sqlite:///{0}/failed_tasks_db.db'.format(db_dir)
+db_path = 'postgresql://postgres:pass123@localhost:5432/postgres' # postgresql:// {user}:{password}@{host}:{port}/{database}
