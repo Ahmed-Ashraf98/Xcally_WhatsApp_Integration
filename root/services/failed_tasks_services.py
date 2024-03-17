@@ -66,7 +66,7 @@ def generate_chain_task_for_faild_task(task):
     task_args_str = task.args
 
     #-----------------------------
-    # task_args_str.replace("'","\'").replace('"','\\"')
+
     if task.msg_type == "text":
 
         body_index = task_args_str.find("body")
@@ -143,36 +143,3 @@ def delete_task_record(task_id):
         print("Task deleted successfully")
     else:
         print("Task not found")
-
-
-
-
-
-      # sub_content = task_args_str[body_index::]
-      #       if "\\'" in sub_content:
-      #           separator_index = sub_content.find(",")
-      #           if separator_index == -1:
-      #               separator_index=sub_content.find("}")
-      #           body_txt = sub_content[:separator_index]
-      #           txt = body_txt[body_txt.find('"'):]
-      #           txt = txt.replace("\'","\\'")
-      #           indexofDB = body_txt.find('"')
-      #           body_txt = body_txt.replace(body_txt[indexofDB:],txt)
-      #           formatted_body = sub_content.replace(sub_content[:separator_index],body_txt)
-      #           task_args_str = task_args_str.replace(task_args_str[body_index::],formatted_body)
-      #
-
-
-
-    # Replace single quotes with double quotes to make it valid JSON
-    #
-    # # Define a regex pattern to match single quotes not enclosed within double quotes
-    # pattern = r"'(?=(?:[^\"\\\\]*(?:\\\\.|\"(?:[^\"\\\\]*(?:\\\\.|\")*)*\")*)*$)"
-    #
-    # # Replace the single quotes not enclosed within double quotes with a different character
-    # modified_json_string = re.sub(pattern, '"', task_args_str)
-    #
-    # valid_json_string = modified_json_string.replace("False", "false").replace("True", "true").replace("None", "null")
-    # stringfy_json = json.dumps(valid_json_string)
-    # json_data = json.loads(stringfy_json)
-    # last_parsing = json.loads(json_data)
