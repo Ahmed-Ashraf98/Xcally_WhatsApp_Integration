@@ -25,7 +25,7 @@ def handle_task_failure(sender, task_id, exception, args, kwargs, traceback, ein
 
     if msg_type == "text" and "msg_obj" in data_obj:
         body_text = data_obj["msg_obj"]["message_data"]["body"]
-        body_text = body_text.replace("'", "&sq?").replace('"', "&dq?")
+        body_text = body_text.replace("'", "&:sq:?").replace('"', "&:dq:?")
         data_obj["msg_obj"]["message_data"]["body"] = body_text
         print(body_text)
 
