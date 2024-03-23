@@ -7,11 +7,11 @@ db_dir = "C:/Users/aashraf/Desktop"
 
 wa_verify_token = "Sana"
 phone_number_id = "209325405605976"
-access_token = "EAARxAciB8DkBO4a6GneHbbmZAG4BZAfS5CRd6pPryuTMqw1G3HyNXSz4TdxQRZAnRSrrS2U8kDqI0J9LYwZAUkBefUCMugcT8xvAWwqy1Ge3x1tz4zgw4EkktPXs1HzxcEH5HDwo6qsCqBncpmZCucVBFm9XhwxnhhmywSnWCU73tphFqAZCl59OJBF6T0zvNHygZADJ92P4cheww1oetZAnQO3dmlQZD"
+access_token = "EAARxAciB8DkBOwG7EvZA5vUDBQX07n7yVyMitzzb5RSVDbwHktqB5QpC6qZAwv9XUwBdgYBET14IYGjxNBcTHq75hWhiFrVmqkVaohsi6vierdxc4xWMIkLC8iaHOoRgZCFeeR3ZBHZCdIli93BaWEHIjZCQf7OAMhSFpD3L1CtMRCeXsKtgVkEdG2ZAhCVobuaT8Ik9vJk9bBlmkDAaWfaZCnWOZAiQZD"
 wa_base_url = "https://graph.facebook.com/v19.0/" + phone_number_id
 wa_request_url = wa_base_url + "/messages"
 wa_media_url = wa_base_url + "/media"
-wa_local_files_repo = r"{0}\Test_Folder\WA_Media".format(main_dir)
+wa_local_files_repo = r"{0}\Test_Folder".format(main_dir)
 
 
 # ======================================================= XCally Setup ================================================
@@ -21,7 +21,7 @@ xcally_api_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjI1MzQwMjMwMDgwM
 xcally_open_channel_id = "5"
 xcally_base_url = "https://xcally.sanasofteg.com/api"
 xcally_create_msg_url = xcally_base_url+"/openchannel/accounts/"+xcally_open_channel_id+"/notify?apikey="+xcally_api_key
-xcally_local_files_repo = r"{0}\Test_Folder\XCally_Attachments".format(main_dir)
+xcally_local_files_repo = r"{0}\Test_Folder".format(main_dir)
 
 # ======================================================= Logs Setup ================================================
 

@@ -23,17 +23,17 @@ def handle_task_failure(sender, task_id, exception, args, kwargs, traceback, ein
     else :
         msg_type = data_obj["message_type"]
 
-    if msg_type == "text" and "msg_obj" in data_obj:
-        body_text = data_obj["msg_obj"]["message_data"]["body"]
-        body_text = body_text.replace("'", "&:sq:?").replace('"', "&:dq:?")
-        data_obj["msg_obj"]["message_data"]["body"] = body_text
-        print(body_text)
-
-    elif msg_type == "text" and "msg_obj" not in data_obj:
-        body_text = data_obj["message_data"]["body"]
-        body_text = body_text = body_text.replace("'", "&:sq:?").replace('"', "&:dq:?")
-        data_obj["message_data"]["body"] = body_text
-        print(body_text)
+    # if msg_type == "text" and "msg_obj" in data_obj:
+    #     body_text = data_obj["msg_obj"]["message_data"]["body"]
+    #     body_text = body_text.replace("'", "&:sq:?").replace('"', "&:dq:?")
+    #     data_obj["msg_obj"]["message_data"]["body"] = body_text
+    #     print(body_text)
+    #
+    # elif msg_type == "text" and "msg_obj" not in data_obj:
+    #     body_text = data_obj["message_data"]["body"]
+    #     body_text = body_text = body_text.replace("'", "&:sq:?").replace('"', "&:dq:?")
+    #     data_obj["message_data"]["body"] = body_text
+    #     print(body_text)
 
 
     print("*" * 50)

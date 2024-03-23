@@ -1,3 +1,4 @@
+import datetime
 import json
 from typing import Any
 from root.config_vars import *
@@ -178,10 +179,10 @@ def wa_get_media_type_extension(mime_type):
     """
     file_extension = ""
     mime_type_category = mime_type[:mime_type.find("/")]
-    the_media_type = mime_type[mime_type.find("/") + 1:]  # for example : if image/jpeg , this will take jpeg only
+    the_media_exten = mime_type[mime_type.find("/") + 1:]  # for example : if image/jpeg , this will take jpeg only
 
     if mime_type_category == "image" or mime_type_category == "audio" or mime_type_category == "video" :
-        file_extension = the_media_type
+        file_extension = the_media_exten
 
     if mime_type_category == "text": # plain text document
         file_extension = "txt"
@@ -192,7 +193,7 @@ def wa_get_media_type_extension(mime_type):
         https://stackoverflow.com/questions/4212861/what-is-a-correct-mime-type-for-docx-pptx-etc
         """
 
-        match the_media_type:
+        match the_media_exten:
             case "pdf": file_extension = "pdf"
             case "vnd.ms-powerpoint": file_extension = "ppt"
             case "msword": file_extension = "doc"
@@ -230,13 +231,15 @@ def wa_download_media(self,data):
         media_extension = media_type_extension["file_extension"]
         media_category = media_type_extension["mime_type_category"]
         local_folder_path = wa_local_files_repo
-        full_media_path_without_file = r"{0}\{1}".format(local_folder_path, media_category)
+        date_now = datetime.datetime.now()
+        full_media_path_without_file = r"{0}\{1}\{2}".format(local_folder_path,date_now.year,str(date_now.month).zfill(2))
 
         if not os.path.exists(full_media_path_without_file):
             os.makedirs(full_media_path_without_file)
 
-        full_media_path = r"{0}\{1}\{2}.{3}".format(local_folder_path,media_category,media_id,media_extension)
-
+        full_media_path = r"{0}\{1}\{2}\{3}.{4}".format(local_folder_path, date_now.year,
+                                                        str(date_now.month).zfill(2), media_id,
+                                                        media_extension)
         with open(full_media_path, 'wb') as file_handler:
             file_handler.write(media_in_binary)
 
@@ -311,6 +314,8 @@ def wa_send_message_to_whatsapp_user(self,data):
     try:
         if "media_data" in data.keys():
             media_id = data["media_data"]["id"]
+            if msg_type in {"application", "text"}:
+                msg_type = "document"
             request_data = {"messaging_product": "whatsapp","to":customer_phone_num,"type": msg_type, msg_type:{"id":media_id}}
             error_logger.error("---------------------------------------------")
             error_logger.error(request_data)

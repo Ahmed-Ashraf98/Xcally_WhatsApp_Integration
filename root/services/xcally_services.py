@@ -1,3 +1,4 @@
+import datetime
 import json
 from typing import Any
 from root.celery import celery
@@ -157,7 +158,7 @@ def xc_get_attachment_type_extension(attachment_details):
         file_extension = the_media_type
 
     if mime_type_category == "application":  # document
-        the_media_type = mime_type[mime_type.find("/") + 1:]  # if application/pdf , this will take mp4 only
+        the_media_type = mime_type[mime_type.find("/") + 1:]  # if application/pdf , this will take pdf only
 
         """
         For MIME types refer to this link : 
@@ -206,13 +207,15 @@ def xc_download_attachment(self, data):
         media_extension = file_obj["file_extension"]
         media_category = file_obj["mime_type_category"]
         local_folder_path = xcally_local_files_repo
-        full_media_path_without_file = r"{0}\{1}".format(local_folder_path, media_category)
+        date_now = datetime.datetime.now()
+        full_media_path_without_file = r"{0}\{1}\{2}".format(local_folder_path,date_now.year,str(date_now.month).zfill(2))
 
         if not os.path.exists(full_media_path_without_file):
             os.makedirs(full_media_path_without_file)
 
-        full_media_path = r"{0}\{1}\{2}.{3}".format(local_folder_path, media_category, attachment_id, media_extension)
-
+        full_media_path = r"{0}\{1}\{2}\{3}.{4}".format(local_folder_path, date_now.year,
+                                                            str(date_now.month).zfill(2), attachment_id,
+                                                            media_extension)
         with open(full_media_path, 'wb+') as file_handler:
             file_handler.write(media_in_binary)
 

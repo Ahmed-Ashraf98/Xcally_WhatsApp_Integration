@@ -4,12 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Fix issues">
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Enhance the waiting result for failed task">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/automation/failed_task_trigger.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/automation/failed_task_trigger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/config_vars.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/config_vars.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/root/database/db_context.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/database/db_context.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/root/services/failed_tasks_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/failed_tasks_services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/whatsapp_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/whatsapp_services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/xcally_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/xcally_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -191,7 +192,15 @@
       <option name="project" value="LOCAL" />
       <updated>1710645796757</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="Enhance the waiting result for failed task">
+      <option name="closed" value="true" />
+      <created>1710700007030</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1710700007030</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -218,6 +227,7 @@
     <MESSAGE value="Add failed task formatting for complex text" />
     <MESSAGE value="Remove wrong comment" />
     <MESSAGE value="Fix issues" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix issues" />
+    <MESSAGE value="Enhance the waiting result for failed task" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enhance the waiting result for failed task" />
   </component>
 </project>

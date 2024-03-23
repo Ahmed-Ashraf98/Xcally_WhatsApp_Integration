@@ -62,27 +62,70 @@ def on_success_for_failed_tasks(record_task_id):
 def generate_chain_task_for_faild_task(task):
 
     global task_sig
-    global valid_json_string
+    global json_data
+
     """
     SQLAlchemy will usually create a column of type VARCHAR or TEXT in the underlying database.
     The JSON data you insert into this column will be stored as a string.
     """
     task_args_str = task.args
+    json_string = task_args_str.replace("True", "true").replace("False", "false").replace("None", "null")
 
     #-----------------------------
 
     if task.msg_type == "text":
-
         body_index = task_args_str.find("body")
-
+        # json.loads(task_args_str.replace("True", "true").replace("False", "false").replace("None", "null"))
         if body_index != -1 :
-            valid_json_string = task_args_str.replace("'",'"').replace("False", "false").replace("True", "true").replace("None", "null")
-            valid_json_string = valid_json_string.replace("&:sq:?","'")
-            valid_json_string = valid_json_string.replace("&:dq:?",'\\"')
+            single_quote_symbol= "&#39;"
+            double_qoute_symbol = "&#34;"
+
+            if "\\\'" in json_string : # contains sinqle qoutes inside the body and double qoutes
+                valid_json_string = json_string.replace("\\\'",single_quote_symbol).replace('"',double_qoute_symbol).replace("'",'"')
+                data_obj = json.loads(valid_json_string)
+
+                if "msg_obj" in data_obj:
+                    body_text = data_obj["msg_obj"]["message_data"]["body"]
+                    body_text = body_text.replace(single_quote_symbol,"\'").replace(double_qoute_symbol,'"')
+                    data_obj["msg_obj"]["message_data"]["body"] = body_text
+
+                elif "msg_obj" not in data_obj:
+                    body_text = data_obj["message_data"]["body"]
+                    body_text = body_text.replace(single_quote_symbol, "\'").replace(double_qoute_symbol, '"')
+                    data_obj["message_data"]["body"] = body_text
+
+                json_data = data_obj
+
+            else: # contains only sinqle qoutes inside the body without double qoutes
+                body_index = json_string.find("body")
+                colon_index= json_string[body_index:].find(":")
+
+                eob_index = json_string[body_index:].find(",") # end of body
+
+                if eob_index == -1:
+                    eob_index = json_string[body_index:].find("}")
+
+                text = json_string[body_index:][colon_index+1:eob_index]
+                encoded_text = text.replace('\'', single_quote_symbol)
+                clear_dp_from_text = encoded_text.replace('"',"")
+                updated_text = clear_dp_from_text.strip()
+                json_string = json_string.replace(json_string[body_index:][colon_index + 1:eob_index],"'"+updated_text+"'")
+                valid_json_string = json_string.replace("'", '"')
+                json_data = json.loads(valid_json_string)
+
+                if "msg_obj" in json_data:
+                    body_text = json_data["msg_obj"]["message_data"]["body"]
+                    body_text = body_text.replace(single_quote_symbol, "\'")
+                    json_data["msg_obj"]["message_data"]["body"] = body_text
+
+                elif "msg_obj" not in json_data:
+                    body_text = json_data["msg_obj"]["message_data"]["body"]
+                    body_text = body_text.replace(single_quote_symbol, "\'")
+                    json_data["msg_obj"]["message_data"]["body"] = body_text
+
     else:
         valid_json_string = task_args_str.replace("'", '"').replace("False", "false").replace("True", "true").replace("None", "null")
-
-    json_data = json.loads(valid_json_string)
+        json_data = json.loads(valid_json_string)
 
     # -----------------------------
 
