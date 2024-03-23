@@ -17,7 +17,9 @@ def failed_tasks_handler():
         with Session() as session:
             # Fetch data from the 'failed_tasks' table
             failed_tasks = session.query(FailedTask).all()
-
+            if len(failed_tasks) == 0 :
+                print(" >>>>>>>> ( No Failed Tasks ) <<<<<<<<< ")
+                return None
             print("="*50)
             for task in failed_tasks:
                 print("Start Task : ")
@@ -34,7 +36,7 @@ def failed_tasks_handler():
                     print("Trying task")
                     while task_obj.status == "PENDING":
                         print("Waiting result .........")
-                        time.sleep(30) # 0.5 minute
+                        time.sleep(10) # 10 seconds
 
                     if task_obj.status == "SUCCESS":
                         on_success_for_failed_tasks(task.id)

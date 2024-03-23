@@ -157,7 +157,7 @@ def xc_get_attachment_type_extension(attachment_details):
     if mime_type_category == "image" or mime_type_category == "audio" or mime_type_category == "video" :
         file_extension = the_media_type
 
-    if mime_type_category == "application":  # document
+    elif mime_type_category == "application":  # document
         the_media_type = mime_type[mime_type.find("/") + 1:]  # if application/pdf , this will take pdf only
 
         """
@@ -180,6 +180,14 @@ def xc_get_attachment_type_extension(attachment_details):
                 file_extension = "pptx"
             case "vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                 file_extension = "xlsx"
+            case _:
+                raise Exception("Unsupported media type from XCally")
+
+    elif mime_type_category == "text": # text/csv
+        file_extension = "txt" # we will make it as txt because the csv not supported by meta
+
+    else:
+        raise Exception(f"The {mime_type_category}, Unsupported media type from Xcally")
 
     return {"file_extension": file_extension, "mime_type_category": mime_type_category}
 
@@ -196,11 +204,12 @@ def xc_download_attachment(self, data):
     attachment_id = data["msg_obj"]["message_data"]["AttachmentId"]
     download_url = f"{xcally_base_url}/attachments/{attachment_id}/download/?apikey={xcally_api_key}"
     attachment_details = data["media_data"]
-    file_obj = xc_get_attachment_type_extension(attachment_details)
-    msg_type = file_obj["mime_type_category"]
-    data["msg_obj"]["message_type"] = msg_type
+
 
     try:
+        file_obj = xc_get_attachment_type_extension(attachment_details)
+        msg_type = file_obj["mime_type_category"]
+        data["msg_obj"]["message_type"] = msg_type
         response = client.get(url=download_url)
         response.raise_for_status()
         media_in_binary = response.read()

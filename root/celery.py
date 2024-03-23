@@ -30,10 +30,7 @@ celery.conf.task_routes = {
 }
 
 
-
-
-
-# ============================ [ Start Workers Commands ] ======================================:
+# ============================[ Start Workers Commands ]======================================:
 
 # for receive msgs =>  celery -A root worker -Q receive_msgs --loglevel=info -n worker1@%h  -E  --pool=threads
 # for sending msgs =>  celery -A root worker -Q send_msgs --loglevel=info -n worker2@%h  -E  --pool=threads
@@ -43,3 +40,6 @@ celery.conf.task_routes = {
 
 # celery -A root flower
 
+# ============================ [ Start Celery Scheduler] ======================================:
+
+# celery -A root beat -s C:\Users\aashraf\Desktop\celery_scheduler\

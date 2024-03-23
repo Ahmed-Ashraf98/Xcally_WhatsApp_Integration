@@ -7,7 +7,7 @@ db_dir = "C:/Users/aashraf/Desktop"
 
 wa_verify_token = "Sana"
 phone_number_id = "209325405605976"
-access_token = "EAARxAciB8DkBOwG7EvZA5vUDBQX07n7yVyMitzzb5RSVDbwHktqB5QpC6qZAwv9XUwBdgYBET14IYGjxNBcTHq75hWhiFrVmqkVaohsi6vierdxc4xWMIkLC8iaHOoRgZCFeeR3ZBHZCdIli93BaWEHIjZCQf7OAMhSFpD3L1CtMRCeXsKtgVkEdG2ZAhCVobuaT8Ik9vJk9bBlmkDAaWfaZCnWOZAiQZD"
+access_token = "EAARxAciB8DkBO8eLVPJXYIlQSZCcUBj9pS7Co8Xw6ayTPu0IErgHUfaFwm1d6f0RCiHcqcwctTsyvpqycZA4cWCZAHdj3jCFNsyTV4wwJHiRgnKBzJHAhrjzcetxYJIzIpDLkuaahuMN88RNFRtlNx9yocgsAbTJZB7zIaZC2YPInpqu7giDIhHqLd35uZAf4gYpBZA00PGw7UIQU99G4MoGUfgJ6IZD"
 wa_base_url = "https://graph.facebook.com/v19.0/" + phone_number_id
 wa_request_url = wa_base_url + "/messages"
 wa_media_url = wa_base_url + "/media"

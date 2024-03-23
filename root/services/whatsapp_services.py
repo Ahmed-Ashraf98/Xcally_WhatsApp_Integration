@@ -177,7 +177,7 @@ def wa_get_media_type_extension(mime_type):
     :param mime_type: for example : image/jpeg
     :return: object contains file_extension and mime_type_category
     """
-    file_extension = ""
+    global file_extension
     mime_type_category = mime_type[:mime_type.find("/")]
     the_media_exten = mime_type[mime_type.find("/") + 1:]  # for example : if image/jpeg , this will take jpeg only
 
@@ -201,6 +201,10 @@ def wa_get_media_type_extension(mime_type):
             case "vnd.openxmlformats-officedocument.wordprocessingml.document": file_extension = "docx"
             case "vnd.openxmlformats-officedocument.presentationml.presentation": file_extension = "pptx"
             case "vnd.openxmlformats-officedocument.spreadsheetml.sheet": file_extension = "xlsx"
+            case _: raise Exception("Unsupported media type from meta")
+
+    else:
+        raise Exception(f"The {mime_type_category}, Unsupported media type from meta")
 
     return {"file_extension":file_extension,"mime_type_category":mime_type_category}
 
@@ -219,10 +223,11 @@ def wa_download_media(self,data):
     # Supported Media Types => audio, document, image, video
     media_url = data["media_data"]["url"]
     media_id = data["media_data"]["id"]
-    media_type_extension = wa_get_media_type_extension(data["media_data"]["mime_type"])
+
     header_auth = {"Authorization": "Bearer " + access_token}
 
     try:
+        media_type_extension = wa_get_media_type_extension(data["media_data"]["mime_type"])
         response = client.get(url=media_url, headers=header_auth)
         response.raise_for_status()  # in case there is an error while calling the API
         # check if the media url is valid,
