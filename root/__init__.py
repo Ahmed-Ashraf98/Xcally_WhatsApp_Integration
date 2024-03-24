@@ -5,6 +5,7 @@ from root.models import failed_task
 import root.config_vars
 import root.celery
 import root.services.failed_tasks_services
+import root.main
 
 
 
