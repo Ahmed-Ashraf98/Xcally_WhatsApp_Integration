@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Add the packages in the requirements.txt">
+    <list default="true" id="5f600420-4873-4e46-81d1-6be47127fb44" name="Changes" comment="Add the versions of  the installed packages in the requirements.txt">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/config_vars.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/config_vars.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/whatsapp_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/whatsapp_services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/root/services/xcally_services.py" beforeDir="false" afterPath="$PROJECT_DIR$/root/services/xcally_services.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -220,7 +222,15 @@
       <option name="project" value="LOCAL" />
       <updated>1711307340762</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Add the versions of  the installed packages in the requirements.txt">
+      <option name="closed" value="true" />
+      <created>1711366383237</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1711366383237</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -251,6 +261,7 @@
     <MESSAGE value="Change the algorithm of decoding the args sting from db, and add the support os sending pdf , xslx , docs, ... files from xcally to whatsapp" />
     <MESSAGE value="Add the Task Scheduler for failed task to run every 15 minutes" />
     <MESSAGE value="Add the packages in the requirements.txt" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add the packages in the requirements.txt" />
+    <MESSAGE value="Add the versions of  the installed packages in the requirements.txt" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add the versions of  the installed packages in the requirements.txt" />
   </component>
 </project>

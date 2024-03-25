@@ -1,6 +1,6 @@
 
 main_dir =r"C:\Users\aashraf\Desktop"
-db_dir = "C:/Users/aashraf/Desktop"
+db_dir = r"C:/Users/aashraf/Desktop"
 
 
 # ======================================================= WA Setup ===================================================

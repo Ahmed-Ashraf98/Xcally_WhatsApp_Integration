@@ -66,7 +66,7 @@ def xc_new_message_handler(request_obj):
         except Exception as exc:
             error_logger.error(f"Error while handling new message from XCally,\n Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
-            pass
+            return None
 
     else: # if not media
         ch_tasks_for_send_txt_msgs = chain(wa_services.wa_send_message_to_whatsapp_user.s({"msg_obj":message_obj}))
@@ -76,7 +76,7 @@ def xc_new_message_handler(request_obj):
         except Exception as exc:
             error_logger.error(f"Error while handling new message from XCally,\n Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
-            pass
+            return None
 
 
 def xc_extract_event_message_details(message:dict[str,Any]):
@@ -338,4 +338,4 @@ def handle_task_exceptions(self, message):
     print(message)
     if self.request.retries < self.max_retries:
         raise self.retry()
-    raise Exception(message)
+    # raise Exception(message)

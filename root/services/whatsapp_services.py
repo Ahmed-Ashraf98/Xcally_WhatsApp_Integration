@@ -74,7 +74,7 @@ def wa_new_message_handler(wa_msg_data):
         except Exception as exc:
             error_logger.error(f"Error while handling the new message from WhatsApp,\n >>> Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
-            pass
+            return None
 
 
     else:  # Not media message
@@ -86,7 +86,7 @@ def wa_new_message_handler(wa_msg_data):
         except Exception as exc:
             error_logger.error(f"Error while handling the new message from WhatsApp,\n >>> Error details : {exc}")
             # Retry the chain of chain_tasks_for_received_msgs
-            pass
+            return None
 
 def wa_extract_messages_details(messages:dict[str,Any]):
 
@@ -184,10 +184,10 @@ def wa_get_media_type_extension(mime_type):
     if mime_type_category == "image" or mime_type_category == "audio" or mime_type_category == "video" :
         file_extension = the_media_exten
 
-    if mime_type_category == "text": # plain text document
+    elif mime_type_category == "text": # plain text document
         file_extension = "txt"
 
-    if mime_type_category == "application": # document
+    elif mime_type_category == "application": # document
         """
         For MIME types refer to this link : 
         https://stackoverflow.com/questions/4212861/what-is-a-correct-mime-type-for-docx-pptx-etc
@@ -369,7 +369,7 @@ def handle_task_exceptions(self, message):
     print(message)
     if self.request.retries < self.max_retries:
         raise self.retry()
-    raise Exception(message)
+    # raise Exception(message)
 
 
 
