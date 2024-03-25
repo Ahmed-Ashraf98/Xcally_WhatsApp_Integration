@@ -65,7 +65,6 @@ def xc_new_message_handler(request_obj):
             return ch_tasks_for_receive_and_send_media_msgs_obj
         except Exception as exc:
             error_logger.error(f"Error while handling new message from XCally,\n Error details : {exc}")
-            # Retry the chain of chain_tasks_for_received_msgs
             return None
 
     else: # if not media
@@ -75,7 +74,6 @@ def xc_new_message_handler(request_obj):
             return ch_tasks_for_send_txt_msgs_obj
         except Exception as exc:
             error_logger.error(f"Error while handling new message from XCally,\n Error details : {exc}")
-            # Retry the chain of chain_tasks_for_received_msgs
             return None
 
 
@@ -338,4 +336,4 @@ def handle_task_exceptions(self, message):
     print(message)
     if self.request.retries < self.max_retries:
         raise self.retry()
-    # raise Exception(message)
+    raise Exception(message)

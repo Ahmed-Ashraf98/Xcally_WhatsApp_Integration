@@ -369,7 +369,7 @@ def handle_task_exceptions(self, message):
     print(message)
     if self.request.retries < self.max_retries:
         raise self.retry()
-    # raise Exception(message)
+    raise Exception(message)
 
 
 
