@@ -1,9 +1,9 @@
-fastapi
-pydantic
-uvicorn[standard]
-httpx # To call External APIs
-celery
-flower
-sqlalchemy
-psycopg2 # in case postgresql
-gunicorn # for process manager
+fastapi == 0.109.2
+pydantic == 2.6.1
+uvicorn[standard] == 0.27.1
+httpx == 0.26.0 # To call External APIs
+celery == 5.3.6
+flower == 2.0.1
+sqlalchemy == 2.0.27
+psycopg2 == 2.9.9 # in case postgresql
+gunicorn == 21.2.0 # for process manager
